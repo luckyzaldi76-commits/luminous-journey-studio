@@ -1,0 +1,1 @@
+Jesus teaching beside the Sea of Galilee

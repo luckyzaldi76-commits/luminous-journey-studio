@@ -6,7 +6,7 @@ from services.prompt_loader import PromptLoader
 
 class ProductionEngine:
 
-    def __init__(self, provider="openrouter"):
+    def __init__(self, provider: str = "openrouter"):
         self.pipeline = ProductionPipeline(provider)
 
     def run(

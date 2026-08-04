@@ -7,7 +7,7 @@ engine = ProductionEngine()
 
 result = engine.run(
     Path("02_MASTER_PROMPT/master_prompt.md"),
-    Path("exports/today"),
+    Path("exports/from_file"),
 )
 
 print(result)
