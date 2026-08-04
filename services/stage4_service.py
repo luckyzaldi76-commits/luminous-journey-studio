@@ -15,7 +15,7 @@ class Stage4Service:
     ) -> str:
 
         prompt = f"""
-Return ONLY markdown.
+Return ONLY this markdown.
 
 # METADATA
 
@@ -30,11 +30,11 @@ AUDIENCE={audience}
 VERSION=1.0
 
 GENERATED_BY=Luminous Journey Studio
-
-Do not generate anything else.
 """
 
-        return self.ai.generate(
+        response = self.ai.generate(
             prompt,
             max_tokens=STAGE4_MAX_TOKENS,
         )
+
+        return response
