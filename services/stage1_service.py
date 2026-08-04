@@ -1,3 +1,4 @@
+from config.settings import STAGE1_MAX_TOKENS
 from services.ai_service import AIService
 
 
@@ -37,9 +38,12 @@ One title.
 Maximum 700 words.
 
 Do not generate SEO.
-Do not generate hashtags.
-Do not generate image prompts.
-Do not generate metadata.
+Do not generate HASHTAGS.
+Do not generate IMAGE_PROMPTS.
+Do not generate METADATA.
 """
 
-        return self.ai.generate(prompt)
+        return self.ai.generate(
+            prompt,
+            max_tokens=STAGE1_MAX_TOKENS,
+        )
