@@ -1,19 +1,23 @@
-When Jesus heard the news of John the Baptist’s death, He withdrew by boat to a deserted place. He sought silence, grief, and prayer. But the crowds followed Him on foot from the towns. When He stepped ashore and saw them, He was moved with compassion, and He healed their sick.
+In today’s Gospel, Matthew 14:13-21, Jesus withdraws to a deserted place after hearing painful news. He seeks solitude, silence, and prayer. Yet when the crowds follow Him, His first response is not irritation, distance, or self-protection. Scripture says, “He was moved with pity for them, and he cured their sick.”
 
-As evening came, the disciples noticed the problem: they were in a lonely place, the hour was late, and the people were hungry. Their solution was practical: “Send them away.” Let them go to the villages and buy food for themselves.
+This is the heart of Christ: even in His sorrow, He turns toward human need with compassion.
 
-But Jesus answered with a sentence that still challenges every disciple: “They need not go away; you give them something to eat.”
+As evening comes, the disciples see the problem clearly. The place is deserted. The hour is late. The crowd is hungry. Their solution seems practical: “Dismiss the crowds so that they can go to the villages and buy food for themselves.”
 
-The disciples looked at what they had and saw only lack: five loaves and two fish. It was not enough. Not for five thousand men, plus women and children. Not for a crowd. Not for a wilderness. Not for the size of the need in front of them.
+But Jesus answers with a command that must have sounded impossible: “There is no need for them to go away; give them some food yourselves.”
 
-But Jesus did not ask them to produce a miracle. He asked them to bring what they had.
+The disciples look at what they have: five loaves and two fish. It is not enough. Not for five thousand men, not counting women and children. Not for such a large hunger. Not for such an impossible situation.
+
+Yet Jesus does not ask them to produce a miracle. He asks them to bring Him what they have.
+
+That is where the miracle begins.
 
 “Bring them here to me.”
 
-That is the turning point.
+These words are an invitation for every heart that feels inadequate. Bring Me your small faith. Bring Me your tired love. Bring Me your limited strength. Bring Me the little time, little patience, little hope, little courage you still have left. Do not hide it because it seems insufficient. Place it in My hands.
 
-The little becomes enough when placed in the hands of Christ.
+Jesus takes the loaves and fish, looks up to heaven, blesses them, breaks them, and gives them to the disciples. Then the disciples give them to the crowds. Everyone eats. Everyone is satisfied. And there are twelve baskets full of fragments left over.
 
-Jesus took the loaves and fish, looked up to heaven, said the blessing, broke the loaves, and gave them to the disciples. Then the disciples gave them to the crowds. Everyone ate. Everyone was satisfied. And when the leftovers were gathered, twelve baskets remained.
+This is the logic of the Kingdom: what is surrendered to Christ is never wasted. What is blessed by Christ becomes more than enough.
 
-This Gospel reveals the heart of Jesus. He does not see the crowd as an interruption. He sees their wounds. He sees their hunger. He sees them with compassion
+We often wait until we feel strong before we serve. We wait until our resources are abundant before we give. We wait until
