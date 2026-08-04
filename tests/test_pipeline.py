@@ -1,14 +1,42 @@
+from pathlib import Path
+
 from services.production_pipeline import ProductionPipeline
 
 
-def main():
+pipeline = ProductionPipeline("openrouter")
 
-    pipeline = ProductionPipeline("openrouter")
+prompt = """
+Return exactly this format.
 
-    result = pipeline.generate("Say hello in one sentence.")
+# TITLE
 
-    print(result)
+Test Title
 
+# SCRIPT
 
-if __name__ == "__main__":
-    main()
+Hello from GPT.
+
+# SEO
+
+SEO Description
+
+# HASHTAGS
+
+#faith
+#jesus
+
+# IMAGE_PROMPTS
+
+Jesus walking on water
+
+# METADATA
+
+Author=Luminous
+"""
+
+result = pipeline.generate(
+    prompt,
+    Path("exports/pipeline"),
+)
+
+print(result)
