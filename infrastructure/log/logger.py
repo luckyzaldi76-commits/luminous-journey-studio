@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 _INITIALIZED = False
 
@@ -7,10 +8,41 @@ def get_logger(name: str) -> logging.Logger:
     global _INITIALIZED
 
     if not _INITIALIZED:
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+
+        log_dir = Path("logs")
+        log_dir.mkdir(exist_ok=True)
+
+        formatter = logging.Formatter(
+            fmt="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
         )
+
+        root = logging.getLogger()
+        root.setLevel(logging.INFO)
+
+        # Hindari handler dobel saat dijalankan berkali-kali
+        root.handlers.clear()
+
+        console = logging.StreamHandler()
+        console.setFormatter(formatter)
+
+        app_file = logging.FileHandler(
+            log_dir / "app.log",
+            encoding="utf-8",
+        )
+        app_file.setFormatter(formatter)
+
+        error_file = logging.FileHandler(
+            log_dir / "error.log",
+            encoding="utf-8",
+        )
+        error_file.setLevel(logging.ERROR)
+        error_file.setFormatter(formatter)
+
+        root.addHandler(console)
+        root.addHandler(app_file)
+        root.addHandler(error_file)
+
         _INITIALIZED = True
 
     return logging.getLogger(name)
