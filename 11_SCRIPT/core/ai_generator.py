@@ -1,11 +1,19 @@
 from services.gemini_service import generate
+from infrastructure.log.logger import get_logger
+
+logger = get_logger(__name__)
 
 
-def generate_content(prompt):
-    print("\nMenghubungi AI...\n")
+def generate_content(prompt: str) -> str:
+    logger.info("Menghubungi AI...")
 
-    result = generate(prompt)
+    try:
+        result = generate(prompt)
 
-    print("AI selesai.\n")
+        logger.info("AI selesai.")
 
-    return result
+        return result
+
+    except Exception:
+        logger.exception("Terjadi kesalahan saat generate AI.")
+        raise
