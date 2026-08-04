@@ -1,0 +1,26 @@
+[project]
+name = "luminous-journey"
+version = "0.1.0"
+description = "Enterprise AI-powered Catholic Content Production Platform"
+
+authors = [
+    { name = "Lucky Zaldi" }
+]
+
+requires-python = ">=3.14"
+
+dependencies = [
+    "requests",
+    "python-dotenv",
+    "openpyxl",
+    "python-docx",
+    "python-pptx",
+    "Pillow",
+    "lxml"
+]
+
+[tool.black]
+line-length = 88
+
+[tool.isort]
+profile = "black"

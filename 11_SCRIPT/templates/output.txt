@@ -1,0 +1,7 @@
+Output in plain text.
+
+Do not use Markdown.
+
+Separate each section with:
+
+==================================================

@@ -1,0 +1,19 @@
+Return ONLY valid JSON.
+
+{
+  "theme": "",
+  "hook": "",
+  "historical_background": "",
+  "reflection": "",
+  "application": "",
+  "prayer": "",
+  "image_prompt": "",
+  "seo_title": "",
+  "seo_description": ""
+}
+
+Do not use markdown.
+
+Do not use ```json.
+
+Return JSON only.

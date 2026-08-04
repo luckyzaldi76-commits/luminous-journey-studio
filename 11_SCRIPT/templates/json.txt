@@ -1,0 +1,5 @@
+Always follow the JSON schema exactly.
+
+Never add explanations.
+
+Return JSON only.

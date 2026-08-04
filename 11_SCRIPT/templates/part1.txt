@@ -1,0 +1,7 @@
+Return ONLY valid JSON.
+
+{
+  "theme":"",
+  "hook":"",
+  "historical_background":""
+}

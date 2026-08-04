@@ -1,0 +1,7 @@
+Return ONLY valid JSON.
+
+{
+  "image_prompt":"",
+  "seo_title":"",
+  "seo_description":""
+}

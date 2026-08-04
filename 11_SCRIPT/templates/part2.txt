@@ -1,0 +1,7 @@
+Return ONLY valid JSON.
+
+{
+  "reflection":"",
+  "application":"",
+  "prayer":""
+}
