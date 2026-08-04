@@ -1,0 +1,12 @@
+{
+    "status": "success",
+    "files": [
+        "image_prompts.md",
+        "metadata.json",
+        "presentation.pptx",
+        "production.log",
+        "response.md",
+        "script.txt",
+        "seo.json"
+    ]
+}
