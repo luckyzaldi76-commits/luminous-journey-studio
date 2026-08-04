@@ -1,9 +1,9 @@
 from pathlib import Path
-from dotenv import load_dotenv
 import os
 
-load_dotenv()
+from dotenv import load_dotenv
 
+load_dotenv()
 
 # ==========================================================
 # APPLICATION
@@ -13,7 +13,7 @@ APP_NAME = "Luminous Journey Studio"
 VERSION = "0.2.0"
 
 # ==========================================================
-# PROJECT PATH
+# PATH
 # ==========================================================
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
@@ -31,10 +31,14 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 
 OPENROUTER_MODEL = os.getenv(
     "OPENROUTER_MODEL",
-    "openai/gpt-5.5"
+    "openai/gpt-5.5",
 )
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+OPENROUTER_MAX_TOKENS = 512
+
+OPENROUTER_TEMPERATURE = 0.7
 
 # ==========================================================
 # REQUEST

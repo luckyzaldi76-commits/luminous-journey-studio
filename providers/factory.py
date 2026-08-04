@@ -1,4 +1,3 @@
-from providers.gemini import GeminiProvider
 from providers.openrouter import OpenRouterProvider
 
 
@@ -8,9 +7,6 @@ class ProviderFactory:
     def create(provider: str):
 
         provider = provider.lower()
-
-        if provider == "gemini":
-            return GeminiProvider()
 
         if provider == "openrouter":
             return OpenRouterProvider()
