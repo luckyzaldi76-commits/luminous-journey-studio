@@ -36,7 +36,7 @@ OPENROUTER_MODEL = os.getenv(
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
-OPENROUTER_MAX_TOKENS = 512
+OPENROUTER_MAX_TOKENS = 1000
 
 OPENROUTER_TEMPERATURE = 0.7
 

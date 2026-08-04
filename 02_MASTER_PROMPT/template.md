@@ -14,7 +14,15 @@ Audience:
 IMPORTANT
 
 Return ONLY markdown.
+Complete every section before stopping.
 
+Never truncate the answer.
+
+Never stop after SCRIPT.
+
+Do not omit SEO, HASHTAGS, IMAGE_PROMPTS or METADATA.
+
+The answer is incomplete unless every section exists.
 Return ALL sections.
 
 Do not omit any section.
