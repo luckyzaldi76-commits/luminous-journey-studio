@@ -58,3 +58,5 @@ build/
 # Images generated
 output/
 renders/
+# Generated outputs
+11_SCRIPT/OUTPUTS/
