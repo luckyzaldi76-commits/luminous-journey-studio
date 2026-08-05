@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from config.settings import AI_PROVIDER
+
 from services.builder_service import BuilderService
 from services.exporter_service import ExporterService
 
@@ -13,10 +15,12 @@ class ProductionEngine:
 
     def __init__(self):
 
-        self.stage1 = Stage1Service()
-        self.stage2 = Stage2Service()
-        self.stage3 = Stage3Service()
-        self.stage4 = Stage4Service()
+        provider = AI_PROVIDER
+
+        self.stage1 = Stage1Service(provider)
+        self.stage2 = Stage2Service(provider)
+        self.stage3 = Stage3Service(provider)
+        self.stage4 = Stage4Service(provider)
 
     def run(
         self,
