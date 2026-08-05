@@ -1,9 +1,5 @@
 from providers.openrouter import OpenRouterProvider
-
-try:
-    from providers.gemini import GeminiProvider
-except ImportError:
-    GeminiProvider = None
+from providers.gemini import GeminiProvider
 
 
 class ProviderFactory:
@@ -17,10 +13,6 @@ class ProviderFactory:
             return OpenRouterProvider()
 
         if provider == "gemini":
-
-            if GeminiProvider is None:
-                raise RuntimeError("Gemini provider belum tersedia.")
-
             return GeminiProvider()
 
         raise ValueError(f"Unknown provider: {provider}")

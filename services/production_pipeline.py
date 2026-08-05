@@ -1,28 +1,29 @@
-from pathlib import Path
+from services.fallback_service import FallbackService
 
 from infrastructure.log.logger import get_logger
-from services.ai_service import AIService
-from services.builder_service import BuilderService
-from services.exporter_service import ExporterService
 
 logger = get_logger(__name__)
 
 
 class ProductionPipeline:
 
-    def __init__(self, provider_name: str):
-        self.ai = AIService(provider_name)
+    def __init__(self):
 
-    def generate(self, prompt: str, output_dir: Path):
+        self.ai = FallbackService()
+
+    def generate(
+        self,
+        prompt: str,
+        max_tokens: int = 512,
+    ):
 
         logger.info("Production Pipeline Started")
 
-        response = self.ai.generate(prompt)
-
-        data = BuilderService.build(response)
-
-        ExporterService.export(output_dir, data)
+        response = self.ai.generate(
+            prompt,
+            max_tokens=max_tokens,
+        )
 
         logger.info("Production Pipeline Finished")
 
-        return data
+        return response

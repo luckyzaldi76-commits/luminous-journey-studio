@@ -4,5 +4,10 @@ from services.gemini_service import generate
 
 class GeminiProvider(AIProvider):
 
-    def generate(self, prompt: str) -> str:
+    def generate(
+        self,
+        prompt: str,
+        max_tokens: int = 1000,
+    ) -> str:
+
         return generate(prompt)
