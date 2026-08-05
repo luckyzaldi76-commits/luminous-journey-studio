@@ -1,0 +1,10 @@
+A cinematic, ultra-realistic 16:9 photo in Netflix documentary style depicting a solitary ancient wooden boat on calm waters near a deserted shore, golden hour lighting, warm sunlight reflecting on the lake, Biblical era setting.
+An ultra-realistic 16:9 wide shot of thousands of first-century people walking along a rugged shoreline, Biblical era clothing, warm golden hour light filtering through clouds, grounded documentary aesthetic.
+A photorealistic 16:9 medium shot of Jesus in humble ancient robes stepping off a wooden boat onto a sandy shore, looking upon a crowd with compassionate eyes, golden hour lighting, ultra-realistic texture.
+Cinematic 16:9 shot of Jesus tenderly placing his hands on a sick person amidst a gathered crowd, golden hour sunlight highlighting expressions of relief and care, Biblical historical documentary style.
+An ultra-realistic 16:9 wide shot of first-century disciples standing on a grassy hill at late afternoon, looking out over a massive crowd spread across a deserted landscape, golden hour fading into dusk.
+A close-up photorealistic 16:9 shot of a disciple's worn, calloused hands holding five small barley loaves and two small fish, golden hour sunlight casting warm highlights, intricate skin and food detail.
+A cinematic 16:9 shot of Jesus standing in a field, holding five loaves and two fish, looking up toward the sky with a grateful expression, golden hour sunlight illuminating his face and robes.
+An ultra-realistic 16:9 close-up shot of hands breaking a rustic loaf of bread, warm golden hour rays beaming through soft atmospheric dust particles, high detail Biblical documentary style.
+A photorealistic 16:9 wide angle shot of disciples handing baskets of bread and fish to families seated in groups on the grass, glowing golden hour light, cinematic Netflix documentary aesthetic.
+Cinematic 16:9 shot of twelve woven baskets overflowing with leftover pieces of bread resting on the grassy hill at sunset, deep golden hour lighting, ultra-realistic, Biblical setting.

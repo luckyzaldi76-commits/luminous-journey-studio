@@ -5,9 +5,9 @@ from providers.gemini import GeminiProvider
 class ProviderFactory:
 
     @staticmethod
-    def create(provider: str):
+    def create(provider_name: str):
 
-        provider = provider.lower()
+        provider = provider_name.lower()
 
         if provider == "openrouter":
             return OpenRouterProvider()
@@ -15,4 +15,6 @@ class ProviderFactory:
         if provider == "gemini":
             return GeminiProvider()
 
-        raise ValueError(f"Unknown provider: {provider}")
+        raise RuntimeError(
+            f"Unknown AI provider: {provider_name}"
+        )

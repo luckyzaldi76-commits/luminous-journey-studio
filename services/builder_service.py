@@ -17,14 +17,22 @@ class BuilderService:
 
         sections = ParserService.parse(response)
 
-        for item in BuilderService.REQUIRED:
-            sections.setdefault(item, "")
+        data = {}
+
+        for key in BuilderService.REQUIRED:
+
+            value = sections.get(key, "")
+
+            if value is None:
+                value = ""
+
+            data[key] = value.strip()
 
         return {
-            "title": sections["TITLE"],
-            "script": sections["SCRIPT"],
-            "seo": sections["SEO"],
-            "hashtags": sections["HASHTAGS"],
-            "image_prompts": sections["IMAGE_PROMPTS"],
-            "metadata": sections["METADATA"],
+            "title": data["TITLE"],
+            "script": data["SCRIPT"],
+            "seo": data["SEO"],
+            "hashtags": data["HASHTAGS"],
+            "image_prompts": data["IMAGE_PROMPTS"],
+            "metadata": data["METADATA"],
         }

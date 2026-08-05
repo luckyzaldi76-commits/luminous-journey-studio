@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from config.settings import AI_PROVIDER
@@ -36,15 +37,28 @@ class ProductionEngine:
             audience,
         )
 
-        stage2 = self.stage2.generate(stage1)
+        with ThreadPoolExecutor(max_workers=3) as executor:
 
-        stage3 = self.stage3.generate(stage1)
+            future_stage2 = executor.submit(
+                self.stage2.generate,
+                stage1,
+            )
 
-        stage4 = self.stage4.generate(
-            gospel,
-            language,
-            audience,
-        )
+            future_stage3 = executor.submit(
+                self.stage3.generate,
+                stage1,
+            )
+
+            future_stage4 = executor.submit(
+                self.stage4.generate,
+                gospel,
+                language,
+                audience,
+            )
+
+            stage2 = future_stage2.result()
+            stage3 = future_stage3.result()
+            stage4 = future_stage4.result()
 
         markdown = "\n\n".join(
             [

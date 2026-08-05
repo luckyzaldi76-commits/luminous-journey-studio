@@ -44,3 +44,36 @@ class FallbackService:
         raise RuntimeError(
             f"All AI providers failed.\n{last_error}"
         )
+
+    def stream(
+        self,
+        prompt: str,
+        max_tokens: int = 512,
+    ):
+
+        last_error = None
+
+        for provider in self.providers:
+
+            try:
+
+                logger.info(f"Trying {provider}")
+
+                ai = AIService(provider)
+
+                yield from ai.stream(
+                    prompt,
+                    max_tokens=max_tokens,
+                )
+
+                return
+
+            except Exception as e:
+
+                logger.warning(f"{provider} failed: {e}")
+
+                last_error = e
+
+        raise RuntimeError(
+            f"All AI providers failed.\n{last_error}"
+        )

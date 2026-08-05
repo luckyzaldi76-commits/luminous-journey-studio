@@ -3,33 +3,77 @@ import re
 
 class ParserService:
 
+    HEADERS = [
+        "TITLE",
+        "SCRIPT",
+        "SEO",
+        "HASHTAGS",
+        "IMAGE_PROMPTS",
+        "METADATA",
+    ]
+
     @staticmethod
     def parse(text: str) -> dict:
 
         sections = {}
 
-        current = "CONTENT"
-
+        current = None
         buffer = []
 
-        for line in text.splitlines():
+        for raw_line in text.splitlines():
 
-            line = line.rstrip()
+            line = raw_line.rstrip()
 
-            match = re.match(r"^#\s+(.+)$", line)
+            header = ParserService._header(line)
 
-            if match:
+            if header:
 
-                sections[current] = "\n".join(buffer).strip()
+                if current is not None:
 
-                current = match.group(1).strip()
+                    sections[current] = "\n".join(buffer).strip()
 
+                current = header
                 buffer = []
 
                 continue
 
-            buffer.append(line)
+            if current is not None:
 
-        sections[current] = "\n".join(buffer).strip()
+                buffer.append(raw_line)
+
+        if current is not None:
+
+            sections[current] = "\n".join(buffer).strip()
 
         return sections
+
+    @staticmethod
+    def _header(line: str):
+
+        line = line.strip()
+
+        patterns = [
+            r"^#\s*(.+)$",
+            r"^##\s*(.+)$",
+            r"^###\s*(.+)$",
+        ]
+
+        for pattern in patterns:
+
+            match = re.match(pattern, line, re.IGNORECASE)
+
+            if not match:
+                continue
+
+            header = (
+                match.group(1)
+                .strip()
+                .upper()
+                .replace(" ", "_")
+            )
+
+            if header in ParserService.HEADERS:
+
+                return header
+
+        return None
