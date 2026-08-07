@@ -1,31 +1,37 @@
-class Registry:
+class WorkflowRegistry:
 
-    def __init__(self):
+    _workflows = {}
 
-        self._items = {}
-
+    @classmethod
     def register(
-        self,
-        name,
-        item,
+        cls,
+        name: str,
+        workflow,
     ):
 
-        self._items[name] = item
+        cls._workflows[name.lower()] = workflow
 
-    def get(
-        self,
-        name,
+    @classmethod
+    def create(
+        cls,
+        name: str,
     ):
 
-        return self._items[name]
+        workflow = cls._workflows.get(
+            name.lower(),
+        )
 
-    def exists(
-        self,
-        name,
-    ):
+        if workflow is None:
 
-        return name in self._items
+            raise RuntimeError(
+                f"Workflow '{name}' not found."
+            )
 
-    def all(self):
+        return workflow()
 
-        return self._items.copy()
+    @classmethod
+    def available(cls):
+
+        return sorted(
+            cls._workflows.keys()
+        )
