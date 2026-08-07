@@ -1,47 +1,34 @@
 from config.settings import STAGE3_MAX_TOKENS
-from services.ai_service import AIService
+
+from services.fallback_service import FallbackService
+from services.template_loader import TemplateLoader
+from services.validator_service import ValidatorService
 
 
 class Stage3Service:
 
-    def __init__(self, provider="openrouter"):
-        self.ai = AIService(provider)
+    def __init__(self):
+
+        self.ai = FallbackService()
 
     def generate(
         self,
         script: str,
     ) -> str:
 
-        prompt = f"""
-Based ONLY on this devotional.
+        prompt = TemplateLoader.load(
+            "stage3.md",
+            script=script,
+        )
 
-{script}
-
-Return ONLY markdown.
-
-# IMAGE_PROMPTS
-
-Generate exactly 10 cinematic AI image prompts.
-
-Requirements:
-
-- Biblical
-- Photorealistic
-- Netflix documentary style
-- Golden hour lighting
-- Ultra realistic
-- 16:9 composition
-- No text
-- One prompt per line
-
-Do not generate TITLE.
-Do not generate SCRIPT.
-Do not generate SEO.
-Do not generate HASHTAGS.
-Do not generate METADATA.
-"""
-
-        return self.ai.generate(
+        response = self.ai.generate(
             prompt,
             max_tokens=STAGE3_MAX_TOKENS,
         )
+
+        ValidatorService.require_sections(
+            response,
+            "IMAGE_PROMPTS",
+        )
+
+        return response

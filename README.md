@@ -1,27 +1,126 @@
-# Luminous Journey
+# Luminous Journey Studio
 
-Enterprise AI-powered Catholic Content Production Platform.
+AI-powered devotional production pipeline for Luminous Journey.
 
 ---
 
 ## Features
 
-- Daily Gospel Production
-- AI Prompt Builder
-- Markdown Parser
-- Validation Engine
-- PPT Builder
-- Script Builder
-- Image Prompt Builder
-- SEO Builder
-- Metadata Builder
+- Multi-stage production pipeline
+- Gemini AI
+- OpenRouter AI
+- Automatic fallback
+- Automatic retry
+- Parallel processing
+- Markdown templates
+- Structured parser
+- Validation
+- Export engine
+
+---
+
+## Project Structure
+
+```
+engine/
+providers/
+services/
+templates/
+config/
+exports/
+logs/
+tests/
+```
+
+---
+
+## Pipeline
+
+```
+Stage 1
+    │
+    ▼
+Devotional Script
+
+    │
+    ▼
+Stage 2
+SEO + Hashtags
+
+    │
+    ▼
+Stage 3
+Image Prompts
+
+    │
+    ▼
+Stage 4
+Metadata
+
+    │
+    ▼
+Builder
+
+    │
+    ▼
+Exporter
+```
+
+---
+
+## AI Providers
+
+Supported:
+
+- Gemini
+- OpenRouter
+
+Automatic fallback:
+
+```
+Gemini
+    │
+    ▼
+Retry
+
+    │
+Success?
+    │
+ No
+    ▼
+OpenRouter
+```
 
 ---
 
 ## Installation
 
 ```bash
-scripts\setup.bat
+git clone https://github.com/luckyzaldi76-commits/luminous-journey-studio.git
+
+cd luminous-journey-studio
+
+pip install -r requirements.txt
+```
+
+---
+
+## Configuration
+
+Create:
+
+```
+.env
+```
+
+Example:
+
+```text
+GEMINI_API_KEY=...
+
+OPENROUTER_API_KEY=...
+
+AI_PROVIDER=gemini
 ```
 
 ---
@@ -29,34 +128,33 @@ scripts\setup.bat
 ## Run
 
 ```bash
-scripts\run.bat
+python -m tests.test_engine
 ```
 
 ---
 
-## Update
+## Output
 
-```bash
-scripts\update.bat
+```
+exports/
+
+    devotional.md
+
+    devotional.docx
+
+    metadata.txt
 ```
 
 ---
 
-## Project Structure
+## Current Version
 
-```
-LUMINOUS_JOURNEY
-│
-├── scripts
-├── 11_SCRIPT
-├── datasets
-├── resources
-├── KNOWLEDGE
-└── ...
-```
+v1.0.0
 
 ---
 
-Version
+## License
 
-0.1.0
+Private project.
+
+Copyright © Luminous Journey.

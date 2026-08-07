@@ -3,36 +3,46 @@ import re
 
 class ParserService:
 
-    HEADERS = [
+    HEADERS = {
         "TITLE",
         "SCRIPT",
         "SEO",
         "HASHTAGS",
         "IMAGE_PROMPTS",
         "METADATA",
-    ]
+    }
 
-    @staticmethod
-    def parse(text: str) -> dict:
+    HEADER_PATTERN = re.compile(
+        r"^#{1,6}\s*(.+?)\s*$",
+        re.IGNORECASE,
+    )
+
+    @classmethod
+    def parse(
+        cls,
+        text: str,
+    ) -> dict:
 
         sections = {}
 
         current = None
+
         buffer = []
 
         for raw_line in text.splitlines():
 
-            line = raw_line.rstrip()
-
-            header = ParserService._header(line)
+            header = cls._header(raw_line)
 
             if header:
 
                 if current is not None:
 
-                    sections[current] = "\n".join(buffer).strip()
+                    sections[current] = (
+                        "\n".join(buffer).strip()
+                    )
 
                 current = header
+
                 buffer = []
 
                 continue
@@ -43,37 +53,96 @@ class ParserService:
 
         if current is not None:
 
-            sections[current] = "\n".join(buffer).strip()
+            sections[current] = (
+                "\n".join(buffer).strip()
+            )
 
         return sections
 
-    @staticmethod
-    def _header(line: str):
+    @classmethod
+    def get(
+        cls,
+        text: str,
+        section: str,
+        default: str = "",
+    ) -> str:
 
-        line = line.strip()
+        return cls.parse(text).get(
+            section.upper(),
+            default,
+        )
 
-        patterns = [
-            r"^#\s*(.+)$",
-            r"^##\s*(.+)$",
-            r"^###\s*(.+)$",
-        ]
+    @classmethod
+    def title(cls, text: str):
 
-        for pattern in patterns:
+        return cls.get(
+            text,
+            "TITLE",
+        )
 
-            match = re.match(pattern, line, re.IGNORECASE)
+    @classmethod
+    def script(cls, text: str):
 
-            if not match:
-                continue
+        return cls.get(
+            text,
+            "SCRIPT",
+        )
 
-            header = (
-                match.group(1)
-                .strip()
-                .upper()
-                .replace(" ", "_")
-            )
+    @classmethod
+    def seo(cls, text: str):
 
-            if header in ParserService.HEADERS:
+        return cls.get(
+            text,
+            "SEO",
+        )
 
-                return header
+    @classmethod
+    def hashtags(cls, text: str):
+
+        return cls.get(
+            text,
+            "HASHTAGS",
+        )
+
+    @classmethod
+    def image_prompts(cls, text: str):
+
+        return cls.get(
+            text,
+            "IMAGE_PROMPTS",
+        )
+
+    @classmethod
+    def metadata(cls, text: str):
+
+        return cls.get(
+            text,
+            "METADATA",
+        )
+
+    @classmethod
+    def _header(
+        cls,
+        line: str,
+    ):
+
+        match = cls.HEADER_PATTERN.match(
+            line.strip()
+        )
+
+        if not match:
+
+            return None
+
+        header = (
+            match.group(1)
+            .strip()
+            .upper()
+            .replace(" ", "_")
+        )
+
+        if header in cls.HEADERS:
+
+            return header
 
         return None

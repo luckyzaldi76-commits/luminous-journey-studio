@@ -1,79 +1,103 @@
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+import time
 
-from config.settings import AI_PROVIDER
+from luminous.context.pipeline_context import PipelineContext
+from luminous.kernel.event_bus import EventBus
+from luminous.kernel.runtime import Runtime
+from luminous.kernel.scheduler import Scheduler
+
+from luminous.workflows.dailygospelworkflow import (
+    DailyGospelWorkflow,
+)
 
 from services.builder_service import BuilderService
 from services.exporter_service import ExporterService
-
-from services.stage1_service import Stage1Service
-from services.stage2_service import Stage2Service
-from services.stage3_service import Stage3Service
-from services.stage4_service import Stage4Service
 
 
 class ProductionEngine:
 
     def __init__(self):
 
-        provider = AI_PROVIDER
+        self.runtime = Runtime(
 
-        self.stage1 = Stage1Service(provider)
-        self.stage2 = Stage2Service(provider)
-        self.stage3 = Stage3Service(provider)
-        self.stage4 = Stage4Service(provider)
+            scheduler=Scheduler(),
+
+            event_bus=EventBus(),
+
+        )
 
     def run(
+
         self,
+
         gospel: str,
+
         language: str,
+
         audience: str,
+
         output_dir: Path,
+
     ):
 
-        stage1 = self.stage1.generate(
-            gospel,
-            language,
-            audience,
+        start = time.perf_counter()
+
+        print()
+        print("=" * 60)
+        print("LUMINOUS JOURNEY STUDIO")
+        print("=" * 60)
+        print()
+
+        context = PipelineContext(
+
+            gospel=gospel,
+
+            language=language,
+
+            audience=audience,
+
         )
 
-        with ThreadPoolExecutor(max_workers=3) as executor:
+        workflow = DailyGospelWorkflow()
 
-            future_stage2 = executor.submit(
-                self.stage2.generate,
-                stage1,
-            )
+        print("Running Workflow...")
+        print()
 
-            future_stage3 = executor.submit(
-                self.stage3.generate,
-                stage1,
-            )
+        self.runtime.run(
 
-            future_stage4 = executor.submit(
-                self.stage4.generate,
-                gospel,
-                language,
-                audience,
-            )
+            workflow,
 
-            stage2 = future_stage2.result()
-            stage3 = future_stage3.result()
-            stage4 = future_stage4.result()
+            context,
 
-        markdown = "\n\n".join(
-            [
-                stage1,
-                stage2,
-                stage3,
-                stage4,
-            ]
         )
 
-        data = BuilderService.build(markdown)
+        print("✓ Workflow completed")
+        print()
+
+        data = BuilderService.build(
+            context,
+        )
+
+        print("Exporting...")
+        print()
 
         ExporterService.export(
+
             output_dir,
+
             data,
+
         )
+
+        elapsed = time.perf_counter() - start
+
+        print("Done.")
+        print()
+
+        print(
+            f"Total Time : {elapsed:.2f} sec"
+        )
+
+        print()
 
         return data

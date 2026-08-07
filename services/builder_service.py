@@ -1,38 +1,73 @@
-from services.parser_service import ParserService
+from luminous.context.pipeline_context import PipelineContext
 
 
 class BuilderService:
 
     REQUIRED = [
-        "TITLE",
-        "SCRIPT",
-        "SEO",
-        "HASHTAGS",
-        "IMAGE_PROMPTS",
-        "METADATA",
+
+        "title",
+
+        "script",
+
+        "seo",
+
+        "hashtags",
+
+        "image_prompts",
+
+        "metadata",
+
     ]
 
-    @staticmethod
-    def build(response: str) -> dict:
+    @classmethod
+    def build(
+        cls,
+        context: PipelineContext,
+    ) -> dict:
 
-        sections = ParserService.parse(response)
+        if not isinstance(
+            context,
+            PipelineContext,
+        ):
 
-        data = {}
+            raise TypeError(
+                "BuilderService.build() expects PipelineContext."
+            )
 
-        for key in BuilderService.REQUIRED:
+        outputs = context.outputs
 
-            value = sections.get(key, "")
+        missing = [
 
-            if value is None:
-                value = ""
+            field
 
-            data[key] = value.strip()
+            for field in cls.REQUIRED
+
+            if not outputs.get(field)
+
+        ]
+
+        if missing:
+
+            raise RuntimeError(
+
+                "Builder missing field(s): "
+
+                + ", ".join(missing)
+
+            )
 
         return {
-            "title": data["TITLE"],
-            "script": data["SCRIPT"],
-            "seo": data["SEO"],
-            "hashtags": data["HASHTAGS"],
-            "image_prompts": data["IMAGE_PROMPTS"],
-            "metadata": data["METADATA"],
+
+            "title": outputs["title"],
+
+            "script": outputs["script"],
+
+            "seo": outputs["seo"],
+
+            "hashtags": outputs["hashtags"],
+
+            "image_prompts": outputs["image_prompts"],
+
+            "metadata": outputs["metadata"],
+
         }

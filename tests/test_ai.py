@@ -1,42 +1,29 @@
-from services.ai_generator import generate_content
-from core.json_parser import parse_ai_response
+from services.fallback_service import FallbackService
 
-prompt = """
-Return ONLY valid JSON.
 
-{
-    "theme":"",
-    "reflection":""
-}
+def main():
 
-Gospel:
-Matius 14:22-36
+    ai = FallbackService()
+
+    prompt = """
+Say hello in one short sentence.
 """
 
-print("=" * 60)
-print("PROMPT")
-print("=" * 60)
-print(prompt)
+    print("=" * 60)
+    print("AI TEST")
+    print("=" * 60)
+    print()
 
-print()
-print("=" * 60)
-print("AI RESPONSE")
-print("=" * 60)
+    response = ai.generate(prompt)
 
-hasil = generate_content(prompt)
+    print(response)
 
-print()
-print("HASIL AI")
-print("=" * 60)
-print(hasil)
+    print()
+    print("=" * 60)
+    print("AI TEST PASSED")
+    print("=" * 60)
 
-print()
-print("HASIL PARSER")
-print("=" * 60)
 
-data = parse_ai_response(hasil)
+if __name__ == "__main__":
 
-print("Theme      :", data["theme"])
-print()
-print("Reflection :")
-print(data["reflection"])
+    main()
