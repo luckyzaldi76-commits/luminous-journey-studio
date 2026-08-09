@@ -1,39 +1,83 @@
+from luminous.context.pipeline_context import PipelineContext
+
 from services.builder_service import BuilderService
 
-sample = """
-# TITLE
 
-Walking with Jesus
+def main():
 
-# SCRIPT
+    context = PipelineContext(
 
-This is script.
+        gospel="Matthew 14:13-21",
 
-# SEO
+        language="English",
 
-SEO Description
+        audience="Adults",
 
-# HASHTAGS
+    )
 
-#faith
-#jesus
+    context.outputs.update(
 
-# IMAGE_PROMPTS
+        {
 
-Prompt 1
+            "title": "Walking with Jesus",
 
-Prompt 2
+            "script": "This is script.",
 
-# METADATA
+            "seo": "SEO Description",
 
-Author=Luminous
-"""
+            "hashtags": "#faith\n#jesus",
 
-result = BuilderService.build(sample)
+            "image_prompts": "Prompt 1\nPrompt 2",
 
-for key, value in result.items():
+            "metadata": {
+
+                "Author": "Luminous",
+
+            },
+
+        }
+
+    )
+
+    result = BuilderService.build(
+
+        context,
+
+    )
+
+    assert result["title"]
+
+    assert result["script"]
+
+    assert result["seo"]
+
+    assert result["hashtags"]
+
+    assert result["image_prompts"]
+
+    assert result["metadata"]
+
+    print()
 
     print("=" * 60)
-    print(key.upper())
-    print("-" * 60)
-    print(value)
+
+    print("BUILDER SERVICE TEST PASSED")
+
+    print("=" * 60)
+
+    print()
+
+    for key, value in result.items():
+
+        print("=" * 60)
+
+        print(key.upper())
+
+        print("-" * 60)
+
+        print(value)
+
+
+if __name__ == "__main__":
+
+    main()

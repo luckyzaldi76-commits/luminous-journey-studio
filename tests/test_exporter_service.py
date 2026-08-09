@@ -1,43 +1,118 @@
 from pathlib import Path
 
+from luminous.context.pipeline_context import PipelineContext
+
 from services.builder_service import BuilderService
 from services.exporter_service import ExporterService
 
 
-sample = """
-# TITLE
+def main():
 
-Walking with Jesus
+    context = PipelineContext(
 
-# SCRIPT
+        gospel="Matthew 14:13-21",
 
-This is script.
+        language="English",
 
-# SEO
+        audience="Adults",
 
-SEO Description
+    )
 
-# HASHTAGS
+    context.outputs.update(
 
-#faith
-#jesus
+        {
 
-# IMAGE_PROMPTS
+            "title": "Walking with Jesus",
 
-Prompt 1
+            "script": "This is script.",
 
-Prompt 2
+            "seo": "SEO Description",
 
-# METADATA
+            "hashtags": "#faith\n#jesus",
 
-Author=Luminous
-"""
+            "image_prompts": "Prompt 1\nPrompt 2",
 
-data = BuilderService.build(sample)
+            "metadata": {
 
-ExporterService.export(
-    Path("exports/demo"),
-    data,
-)
+                "Author": "Luminous",
 
-print("Export OK")
+            },
+
+            "_runtime": {
+
+                "success": True,
+
+            },
+
+        }
+
+    )
+
+    data = BuilderService.build(
+
+        context,
+
+    )
+
+    output = Path(
+
+        "exports/test",
+
+    )
+
+    ExporterService.export(
+
+        output,
+
+        data,
+
+    )
+
+    assert (
+
+        output / "script.txt"
+
+    ).exists()
+
+    assert (
+
+        output / "response.md"
+
+    ).exists()
+
+    assert (
+
+        output / "seo.json"
+
+    ).exists()
+
+    assert (
+
+        output / "metadata.json"
+
+    ).exists()
+
+    assert (
+
+        output / "image_prompts.md"
+
+    ).exists()
+
+    assert (
+
+        output / "runtime.json"
+
+    ).exists()
+
+    print()
+
+    print("=" * 60)
+
+    print("EXPORTER SERVICE TEST PASSED")
+
+    print("=" * 60)
+
+
+if __name__ == "__main__":
+
+    main()

@@ -3,7 +3,7 @@ from luminous.context.pipeline_context import PipelineContext
 
 class BuilderService:
 
-    REQUIRED = [
+    REQUIRED = (
 
         "title",
 
@@ -17,7 +17,7 @@ class BuilderService:
 
         "metadata",
 
-    ]
+    )
 
     @classmethod
     def build(
@@ -36,15 +36,32 @@ class BuilderService:
 
         outputs = context.outputs
 
-        missing = [
+        missing = []
 
-            field
+        for field in cls.REQUIRED:
 
-            for field in cls.REQUIRED
+            value = outputs.get(
+                field,
+            )
 
-            if not outputs.get(field)
+            if value is None:
 
-        ]
+                missing.append(
+                    field,
+                )
+
+                continue
+
+            if isinstance(
+                value,
+                str,
+            ):
+
+                if not value.strip():
+
+                    missing.append(
+                        field,
+                    )
 
         if missing:
 
@@ -69,5 +86,10 @@ class BuilderService:
             "image_prompts": outputs["image_prompts"],
 
             "metadata": outputs["metadata"],
+
+            "_runtime": outputs.get(
+                "_runtime",
+                {},
+            ),
 
         }

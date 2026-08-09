@@ -10,7 +10,7 @@ class PromptBuilder:
     ) -> str:
 
         text = template.read_text(
-            encoding="utf-8"
+            encoding="utf-8",
         )
 
         for key, value in kwargs.items():

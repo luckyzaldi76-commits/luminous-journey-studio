@@ -1,4 +1,4 @@
-from services.parser_service import ParserService
+from luminous.infrastructure.parsers.parser_service import ParserService
 
 
 sample = """

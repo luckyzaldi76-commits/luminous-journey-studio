@@ -1,4 +1,4 @@
-from services.openrouter_service import generate
+from luminous.infrastructure.ai.openrouter_service import generate
 
 
 class AIGenerator:

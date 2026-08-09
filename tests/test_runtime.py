@@ -1,15 +1,12 @@
 from luminous.context.pipeline_context import PipelineContext
 
-from luminous.domain.workflow import Workflow
-
+from luminous.kernel.event_bus import EventBus
 from luminous.kernel.runtime import Runtime
 from luminous.kernel.scheduler import Scheduler
-from luminous.kernel.event_bus import EventBus
 
-from luminous.tasks.script_task import ScriptTask
-from luminous.tasks.seo_task import SeoTask
-from luminous.tasks.image_task import ImageTask
-from luminous.tasks.metadata_task import MetadataTask
+from luminous.workflows.dailygospelworkflow import (
+    DailyGospelWorkflow,
+)
 
 
 def main():
@@ -24,23 +21,7 @@ def main():
 
     )
 
-    workflow = Workflow(
-
-        name="Daily Gospel",
-
-        tasks=[
-
-            ScriptTask(),
-
-            SeoTask(),
-
-            ImageTask(),
-
-            MetadataTask(),
-
-        ],
-
-    )
+    workflow = DailyGospelWorkflow()
 
     runtime = Runtime(
 
@@ -50,7 +31,7 @@ def main():
 
     )
 
-    runtime.run(
+    result = runtime.run(
 
         workflow,
 
@@ -58,14 +39,35 @@ def main():
 
     )
 
-    print("=" * 60)
-    print("RUNTIME OK")
-    print("=" * 60)
+    assert result.success
+
+    assert context.outputs["title"]
+
+    assert context.outputs["script"]
+
+    assert context.outputs["seo"]
+
+    assert context.outputs["hashtags"]
+
+    assert context.outputs["image_prompts"]
+
+    assert context.outputs["metadata"]
+
+    assert "_runtime" in context.outputs
+
     print()
 
-    print("OUTPUTS")
-    print(context.outputs.keys())
+    print("=" * 60)
+
+    print("RUNTIME TEST PASSED")
+
+    print("=" * 60)
+
+    print()
+
+    print(result.to_dict())
 
 
 if __name__ == "__main__":
+
     main()

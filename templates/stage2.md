@@ -1,15 +1,13 @@
-Generate SEO for the following devotional.
+Generate SEO metadata for this devotional.
 
-Return exactly:
+{script}
+
+Return EXACTLY:
 
 # SEO
 
-...
+One short YouTube description.
 
 # HASHTAGS
 
-...
-
-Devotional:
-
-{script}
+#ChristianMeditation #DailyGospel #Jesus #Bible #Prayer #Faith #Gospel #LuminousJourney

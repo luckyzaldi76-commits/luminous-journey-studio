@@ -1,5 +1,27 @@
 from providers.factory import ProviderFactory
 
-provider = ProviderFactory.create("openrouter")
 
-print(type(provider).__name__)python tests/test_provider.py
+def main():
+
+    provider = ProviderFactory.create(
+        "openrouter",
+    )
+
+    print()
+
+    print("=" * 60)
+
+    print("PROVIDER TEST PASSED")
+
+    print("=" * 60)
+
+    print()
+
+    print(type(provider).__name__)
+
+    print(provider)
+
+
+if __name__ == "__main__":
+
+    main()

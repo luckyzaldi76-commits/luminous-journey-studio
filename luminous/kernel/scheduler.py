@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 
-from luminous.tasks.script_task import ScriptTask
+from luminous.domain.executionnode import ExecutionNode
 
 
 class Scheduler:
@@ -10,71 +10,70 @@ class Scheduler:
         workflow,
     ):
 
-        return workflow.tasks
+        return [
+            ExecutionNode.from_task(
+                task,
+            )
+            for task in workflow.tasks
+        ]
 
     def execute(
         self,
-        tasks,
+        nodes,
         context,
     ):
 
-        #
-        # ScriptTask harus selalu dulu
-        #
+        completed = set()
 
-        script_task = None
+        remaining = list(nodes)
 
-        parallel = []
+        while remaining:
 
-        for task in tasks:
-
-            if isinstance(
-                task,
-                ScriptTask,
-            ):
-
-                script_task = task
-
-            else:
-
-                parallel.append(
-                    task,
+            ready = [
+                node
+                for node in remaining
+                if node.ready(
+                    completed,
                 )
-
-        #
-        # Stage 1
-        #
-
-        if script_task:
-
-            script_task.execute(
-                context,
-            )
-
-        #
-        # Stage 2+
-        #
-
-        with ThreadPoolExecutor(
-
-            max_workers=len(parallel),
-
-        ) as executor:
-
-            futures = [
-
-                executor.submit(
-
-                    task.execute,
-
-                    context,
-
-                )
-
-                for task in parallel
-
             ]
 
-            for future in futures:
+            if not ready:
 
-                future.result()
+                waiting = [
+                    node.name
+                    for node in remaining
+                ]
+
+                raise RuntimeError(
+                    "Circular task dependency detected: "
+                    + ", ".join(waiting)
+                )
+
+            with ThreadPoolExecutor(
+                max_workers=max(
+                    1,
+                    len(ready),
+                ),
+            ) as executor:
+
+                futures = {
+                    executor.submit(
+                        node.task.execute,
+                        context,
+                    ): node
+                    for node in ready
+                }
+
+                for future, node in futures.items():
+
+                    future.result()
+
+                    node.mark_completed()
+
+                    completed.add(
+                        node.name,
+                    )
+
+                    remaining.remove(
+                        node,
+                    )

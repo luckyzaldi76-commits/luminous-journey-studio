@@ -1,37 +1,38 @@
-from config.settings import (
-    AI_PROVIDER,
-    USE_MOCK,
-)
-
-from infrastructure.log.logger import get_logger
-from services.ai_service import AIService
-
-logger = get_logger(__name__)
+import os
 
 
 class FallbackService:
 
     def __init__(self):
 
-        if AI_PROVIDER.lower() == "gemini":
+        from services.ai_service import AIService
 
-            self.providers = [
-                "gemini",
-            ]
+        provider_name = os.getenv(
+            "AI_PROVIDER",
+            "auto",
+        ).strip().lower()
 
-        elif AI_PROVIDER.lower() == "openrouter":
+        use_mock = os.getenv(
+            "USE_MOCK",
+            "False",
+        ).strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
 
-            self.providers = [
-                "openrouter",
-            ]
+        if use_mock:
 
-        else:
+            provider_name = "mock"
 
-            # AUTO MODE
-            self.providers = [
-                "gemini",
-                "openrouter",
-            ]
+        elif provider_name == "auto":
+
+            provider_name = "openrouter"
+
+        self.ai = AIService(
+            provider_name,
+        )
 
     def generate(
         self,
@@ -39,102 +40,9 @@ class FallbackService:
         max_tokens: int = 512,
     ) -> str:
 
-        # ==========================================
-        # MOCK MODE
-        # ==========================================
-
-        if USE_MOCK:
-
-            logger.info("Using Mock Provider")
-
-            print("▶ Provider : Mock")
-
-            print("✓ Mock succeeded\n")
-
-            return """
-# TITLE
-
-Mock Title
-
-# SCRIPT
-
-This is a mock response.
-
-# SEO
-
-Mock SEO
-
-# HASHTAGS
-
-#mock
-
-# IMAGE_PROMPTS
-
-Mock image prompt.
-
-# METADATA
-
-AUTHOR=Mock
-"""
-
-        errors = []
-
-        for provider in self.providers:
-
-            try:
-
-                logger.info(
-                    "Trying provider: %s",
-                    provider,
-                )
-
-                print(
-                    f"▶ Provider : {provider.capitalize()}"
-                )
-
-                ai = AIService(provider)
-
-                result = ai.generate(
-                    prompt,
-                    max_tokens=max_tokens,
-                )
-
-                logger.info(
-                    "%s succeeded",
-                    provider,
-                )
-
-                print(
-                    f"✓ {provider.capitalize()} succeeded\n"
-                )
-
-                return result
-
-            except Exception as e:
-
-                message = str(e).splitlines()[0]
-
-                logger.warning(
-                    "%s failed: %s",
-                    provider,
-                    message,
-                )
-
-                print(
-                    f"✗ {provider.capitalize()} failed"
-                )
-
-                print(
-                    f"  Reason : {message}\n"
-                )
-
-                errors.append(
-                    f"{provider.capitalize()}: {message}"
-                )
-
-        raise RuntimeError(
-            "All AI providers failed.\n\n"
-            + "\n".join(errors)
+        return self.ai.generate(
+            prompt,
+            max_tokens=max_tokens,
         )
 
     def stream(
@@ -143,46 +51,23 @@ AUTHOR=Mock
         max_tokens: int = 512,
     ):
 
-        errors = []
+        yield from self.ai.stream(
+            prompt,
+            max_tokens=max_tokens,
+        )
 
-        for provider in self.providers:
+    @property
+    def provider(
+        self,
+    ) -> str:
 
-            try:
+        return self.ai.name
 
-                logger.info(
-                    "Trying provider: %s",
-                    provider,
-                )
+    def __repr__(
+        self,
+    ) -> str:
 
-                ai = AIService(provider)
-
-                yield from ai.stream(
-                    prompt,
-                    max_tokens=max_tokens,
-                )
-
-                logger.info(
-                    "%s succeeded",
-                    provider,
-                )
-
-                return
-
-            except Exception as e:
-
-                message = str(e).splitlines()[0]
-
-                logger.warning(
-                    "%s failed: %s",
-                    provider,
-                    message,
-                )
-
-                errors.append(
-                    f"{provider.capitalize()}: {message}"
-                )
-
-        raise RuntimeError(
-            "All AI providers failed.\n\n"
-            + "\n".join(errors)
+        return (
+            f"{self.__class__.__name__}"
+            f"(provider='{self.provider}')"
         )

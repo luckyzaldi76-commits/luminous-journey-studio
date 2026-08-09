@@ -1,51 +1,81 @@
 class RetryPolicy:
 
-    @staticmethod
-    def should_retry(error: Exception) -> bool:
+    NO_RETRY = (
+        "401",
+        "402",
+        "403",
+        "404",
+        "429",
+        "quota",
+        "resource_exhausted",
+        "insufficient",
+        "credit",
+        "invalid api key",
+        "unauthorized",
+        "permission",
+        "forbidden",
+    )
+
+    RETRY = (
+        "408",
+        "409",
+        "425",
+        "500",
+        "502",
+        "503",
+        "504",
+        "timeout",
+        "timed out",
+        "connection",
+        "connection reset",
+        "connection aborted",
+        "temporarily",
+        "temporary",
+        "unavailable",
+        "internal server error",
+        "bad gateway",
+        "gateway timeout",
+    )
+
+    @classmethod
+    def should_retry(
+        cls,
+        error: Exception,
+    ) -> bool:
 
         message = str(error).lower()
 
-        #
-        # Do NOT retry
-        #
+        for item in cls.NO_RETRY:
 
-        no_retry = (
-            "429",
-            "resource_exhausted",
-            "quota",
-            "402",
-            "credit",
-            "insufficient",
-            "unauthorized",
-            "401",
-            "403",
-            "invalid api key",
-        )
+            if item in message:
 
-        if any(item in message for item in no_retry):
-            return False
+                return False
 
-        #
-        # Retry
-        #
+        for item in cls.RETRY:
 
-        retry = (
-            "500",
-            "502",
-            "503",
-            "504",
-            "timeout",
-            "timed out",
-            "connection",
-            "temporarily",
-            "unavailable",
-        )
+            if item in message:
 
-        if any(item in message for item in retry):
-            return True
-
-        #
-        # default
-        #
+                return True
 
         return True
+
+    @classmethod
+    def retry_delay(
+        cls,
+        attempt: int,
+    ) -> int:
+
+        delays = (
+            2,
+            5,
+            10,
+            20,
+            30,
+        )
+
+        return delays[
+            min(
+                attempt,
+                len(delays) - 1,
+            )
+        ]

@@ -4,96 +4,161 @@ AI-powered devotional production pipeline for Luminous Journey.
 
 ---
 
-## Features
+# Features
 
-- Multi-stage production pipeline
-- Gemini AI
-- OpenRouter AI
-- Automatic fallback
-- Automatic retry
-- Parallel processing
-- Markdown templates
-- Structured parser
+- Workflow Runtime
+- Workflow Registry
+- Scheduler
+- Event Bus
+- Pipeline Context
+- Multi-stage Production
+- Gemini Provider
+- OpenRouter Provider
+- Mock Provider
+- Automatic Provider Fallback
+- Retry Policy
+- Markdown Templates
+- Structured Parser
 - Validation
-- Export engine
+- Builder
+- Export Engine
+- CLI
+- Parallel Task Execution
 
 ---
 
-## Project Structure
+# Architecture
 
 ```
-engine/
-providers/
-services/
-templates/
-config/
-exports/
-logs/
-tests/
-```
-
----
-
-## Pipeline
-
-```
-Stage 1
-    │
-    ▼
-Devotional Script
-
-    │
-    ▼
-Stage 2
-SEO + Hashtags
-
-    │
-    ▼
-Stage 3
-Image Prompts
-
-    │
-    ▼
-Stage 4
-Metadata
-
-    │
-    ▼
+CLI
+ │
+ ▼
+Production Engine
+ │
+ ▼
+Workflow Registry
+ │
+ ▼
+Runtime
+ │
+ ▼
+Scheduler
+ │
+ ▼
+Pipeline Context
+ │
+ ▼
+Tasks
+ │
+ ├── Script
+ ├── SEO
+ ├── Image
+ └── Metadata
+ │
+ ▼
 Builder
-
-    │
-    ▼
+ │
+ ▼
 Exporter
 ```
 
 ---
 
-## AI Providers
+# Project Structure
+
+```
+config/
+
+engine/
+
+exports/
+
+luminous/
+    container/
+    context/
+    domain/
+    kernel/
+    tasks/
+    workflows/
+
+providers/
+
+services/
+
+templates/
+
+tests/
+
+run.py
+```
+
+---
+
+# Workflow
+
+```
+Script
+   │
+   ├───────────────┐
+   ▼               ▼
+SEO           Image Prompts
+   │               │
+   └──────┬────────┘
+          ▼
+      Metadata
+          │
+          ▼
+       Builder
+          │
+          ▼
+       Exporter
+```
+
+---
+
+# AI Providers
 
 Supported:
 
 - Gemini
 - OpenRouter
+- Mock
 
-Automatic fallback:
+Provider selection:
+
+```
+USE_MOCK=True
+
+        │
+        ▼
+
+      Mock
+
+        │
+
+        ▼
+
+Completed
+```
+
+or
 
 ```
 Gemini
-    │
-    ▼
+   │
+   ▼
 Retry
-
-    │
+   │
 Success?
-    │
+   │
  No
-    ▼
+   ▼
 OpenRouter
 ```
 
 ---
 
-## Installation
+# Installation
 
 ```bash
 git clone https://github.com/luckyzaldi76-commits/luminous-journey-studio.git
@@ -105,56 +170,89 @@ pip install -r requirements.txt
 
 ---
 
-## Configuration
+# Configuration
 
 Create:
 
-```
+```text
 .env
 ```
 
 Example:
 
 ```text
-GEMINI_API_KEY=...
+AI_PROVIDER=auto
 
-OPENROUTER_API_KEY=...
+USE_MOCK=False
 
-AI_PROVIDER=gemini
+GEMINI_API_KEY=xxxxxxxx
+
+OPENROUTER_API_KEY=xxxxxxxx
 ```
 
 ---
 
-## Run
+# Run Workflow
 
 ```bash
-python -m tests.test_engine
+python run.py daily_gospel --gospel "Matthew 14:13-21"
+```
+
+or
+
+```bash
+python run.py daily_gospel \
+    --gospel "Matthew 14:13-21" \
+    --language English \
+    --audience Adults
 ```
 
 ---
 
-## Output
+# Run Tests
+
+```bash
+python -m tests.test_runtime
+
+python -m tests.test_template_loader
+
+python -m tests.run_all
+```
+
+---
+
+# Export Files
 
 ```
 exports/
 
-    devotional.md
+script.txt
 
-    devotional.docx
+response.md
 
-    metadata.txt
+seo.json
+
+metadata.json
+
+image_prompts.md
+
+runtime.json
 ```
 
 ---
 
-## Current Version
+# Current Version
 
-v1.0.0
+```
+v0.5.0
+```
+
+Runtime Architecture Edition.
 
 ---
 
-## License
+# License
 
-Private project.
+Private Project.
 
 Copyright © Luminous Journey.

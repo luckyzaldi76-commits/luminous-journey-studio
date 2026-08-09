@@ -12,7 +12,6 @@ class Runtime:
     ):
 
         self.scheduler = scheduler
-
         self.event_bus = event_bus
 
     def run(
@@ -21,46 +20,90 @@ class Runtime:
         context,
     ):
 
-        start = time.perf_counter()
-
         self.event_bus.emit(
             "workflow.started",
             workflow.name,
         )
 
-        tasks = self.scheduler.build(
-            workflow,
-        )
+        start = time.perf_counter()
 
-        self.scheduler.execute(
-            tasks,
-            context,
-        )
+        try:
 
-        duration = (
-            time.perf_counter()
-            - start
-        )
+            tasks = self.scheduler.build(
+                workflow,
+            )
 
-        context.outputs["_runtime"] = {
+            self.scheduler.execute(
+                tasks,
+                context,
+            )
 
-            "duration": duration,
+            duration = (
+                time.perf_counter()
+                - start
+            )
 
-            "success": True,
+            result = TaskResult(
 
-        }
+                task=workflow.name,
 
-        self.event_bus.emit(
-            "workflow.finished",
-            workflow.name,
-        )
+                success=True,
 
-        return TaskResult(
+                duration=duration,
 
-            task=workflow.name,
+            )
 
-            success=True,
+            context.outputs["_runtime"] = {
 
-            duration=duration,
+                "success": True,
 
-        )
+                "duration": duration,
+
+                "workflow": workflow.name,
+
+            }
+
+            self.event_bus.emit(
+                "workflow.finished",
+                workflow.name,
+            )
+
+            return result
+
+        except Exception as e:
+
+            duration = (
+                time.perf_counter()
+                - start
+            )
+
+            result = TaskResult(
+
+                task=workflow.name,
+
+                success=False,
+
+                duration=duration,
+
+                message=str(e),
+
+            )
+
+            context.outputs["_runtime"] = {
+
+                "success": False,
+
+                "duration": duration,
+
+                "workflow": workflow.name,
+
+                "error": str(e),
+
+            }
+
+            self.event_bus.emit(
+                "workflow.failed",
+                workflow.name,
+            )
+
+            raise

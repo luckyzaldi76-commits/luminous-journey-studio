@@ -1,21 +1,21 @@
 from pathlib import Path
-import time
 
 from luminous.context.pipeline_context import PipelineContext
 from luminous.kernel.event_bus import EventBus
-from luminous.kernel.registry import WorkflowRegistry
 from luminous.kernel.runtime import Runtime
 from luminous.kernel.scheduler import Scheduler
-
-from luminous.workflows import *
+from luminous.workflows.dailygospelworkflow import DailyGospelWorkflow
 
 from services.builder_service import BuilderService
-from services.exporter_service import ExporterService
+from luminous.infrastructure.exporters.exporter_service import ExporterService
 
 
 class ProductionEngine:
 
     def __init__(self):
+
+        self.builder = BuilderService()
+        self.exporter = ExporterService()
 
         self.runtime = Runtime(
             scheduler=Scheduler(),
@@ -24,20 +24,12 @@ class ProductionEngine:
 
     def run(
         self,
-        workflow_name: str,
         gospel: str,
         language: str,
         audience: str,
         output_dir: Path,
-    ):
-
-        start = time.perf_counter()
-
-        print()
-        print("=" * 60)
-        print("LUMINOUS JOURNEY STUDIO")
-        print("=" * 60)
-        print()
+        workflow_name: str = "Daily Gospel",
+    ) -> dict:
 
         context = PipelineContext(
             gospel=gospel,
@@ -45,39 +37,35 @@ class ProductionEngine:
             audience=audience,
         )
 
-        workflow = WorkflowRegistry.create(
-            workflow_name,
-        )
-
-        print("Running Workflow...")
-        print()
+        workflow = DailyGospelWorkflow()
 
         self.runtime.run(
             workflow,
             context,
         )
 
-        print("✓ Workflow completed")
-        print()
-
-        data = BuilderService.build(
+        data = self.builder.build(
             context,
         )
 
-        print("Exporting...")
-        print()
+        data.setdefault(
+            "gospel",
+            gospel,
+        )
 
-        ExporterService.export(
+        data.setdefault(
+            "language",
+            language,
+        )
+
+        data.setdefault(
+            "audience",
+            audience,
+        )
+
+        self.exporter.export(
             output_dir,
             data,
         )
-
-        elapsed = time.perf_counter() - start
-
-        print("Done.")
-        print()
-
-        print(f"Total Time : {elapsed:.2f} sec")
-        print()
 
         return data

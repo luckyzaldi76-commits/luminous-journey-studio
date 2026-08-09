@@ -1,7 +1,10 @@
 from config.settings import STAGE3_MAX_TOKENS
 
+from luminous.infrastructure.templates.template_loader import (
+    TemplateLoader,
+)
+
 from services.fallback_service import FallbackService
-from services.template_loader import TemplateLoader
 from services.validator_service import ValidatorService
 
 
@@ -11,14 +14,33 @@ class Stage3Service:
 
         self.ai = FallbackService()
 
+    def build_prompt(
+        self,
+        script: str,
+    ) -> str:
+
+        return TemplateLoader.load(
+            "stage3.md",
+            script=script,
+        )
+
+    def validate(
+        self,
+        response: str,
+    ) -> dict:
+
+        return ValidatorService.require_sections(
+            response,
+            "IMAGE_PROMPTS",
+        )
+
     def generate(
         self,
         script: str,
     ) -> str:
 
-        prompt = TemplateLoader.load(
-            "stage3.md",
-            script=script,
+        prompt = self.build_prompt(
+            script,
         )
 
         response = self.ai.generate(
@@ -26,9 +48,8 @@ class Stage3Service:
             max_tokens=STAGE3_MAX_TOKENS,
         )
 
-        ValidatorService.require_sections(
+        self.validate(
             response,
-            "IMAGE_PROMPTS",
         )
 
         return response

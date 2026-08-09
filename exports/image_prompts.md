@@ -1,1 +1,1 @@
-Mock image prompt.
+A cinematic sunrise over mountains with warm golden light.

@@ -1,26 +1,50 @@
 [project]
-name = "luminous-journey"
-version = "0.1.0"
-description = "Enterprise AI-powered Catholic Content Production Platform"
+name = "luminous-journey-studio"
+version = "0.5.0"
+description = "Workflow-driven AI-powered Catholic Content Production Platform"
+readme = "README.md"
+requires-python = ">=3.14"
 
 authors = [
     { name = "Lucky Zaldi" }
 ]
 
-requires-python = ">=3.14"
-
 dependencies = [
-    "requests",
-    "python-dotenv",
-    "openpyxl",
-    "python-docx",
-    "python-pptx",
-    "Pillow",
-    "lxml"
+    "google-genai>=1.30.0",
+    "requests>=2.32.0",
+    "python-dotenv>=1.1.0",
+    "openpyxl>=3.1.5",
+    "python-docx>=1.2.0",
+    "python-pptx>=1.0.2",
+    "Pillow>=11.3.0",
+    "lxml>=6.0.0",
 ]
 
 [tool.black]
 line-length = 88
+target-version = ["py314"]
 
 [tool.isort]
 profile = "black"
+line_length = 88
+
+[tool.pytest.ini_options]
+pythonpath = [
+    ".",
+]
+
+testpaths = [
+    "tests",
+]
+
+python_files = [
+    "test_*.py",
+]
+
+[build-system]
+requires = [
+    "setuptools>=80",
+    "wheel",
+]
+
+build-backend = "setuptools.build_meta"

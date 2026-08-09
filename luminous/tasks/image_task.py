@@ -1,7 +1,7 @@
 from luminous.context.pipeline_context import PipelineContext
 from luminous.tasks.base_task import BaseTask
 
-from services.parser_service import ParserService
+from luminous.infrastructure.parsers.parser_service import ParserService
 from services.stage3_service import Stage3Service
 
 
@@ -10,6 +10,10 @@ class ImageTask(BaseTask):
     name = "image"
 
     version = "2.0"
+
+    depends_on = (
+        "script",
+    )
 
     def __init__(self):
 
@@ -20,7 +24,7 @@ class ImageTask(BaseTask):
         context: PipelineContext,
     ):
 
-        script = context.outputs.get(
+        script = context.get(
             "script",
         )
 
@@ -34,10 +38,11 @@ class ImageTask(BaseTask):
             script=script,
         )
 
-        context.outputs["image_prompts"] = (
+        context.set(
+            "image_prompts",
             ParserService.image_prompts(
                 response,
-            )
+            ),
         )
 
         return response

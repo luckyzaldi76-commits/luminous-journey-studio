@@ -1,18 +1,42 @@
 import time
 
 from infrastructure.log.logger import get_logger
+from services.retry_policy import RetryPolicy
+
 
 logger = get_logger(__name__)
 
 
 class RetryService:
 
-    @staticmethod
+    DEFAULT_RETRIES = 3
+
+    DEFAULT_DELAYS = (
+        2,
+        5,
+        10,
+    )
+
+    @classmethod
     def execute(
+        cls,
         func,
-        retries: int = 3,
-        delays: tuple = (2, 5, 10),
+        retries: int | None = None,
+        delays: tuple | None = None,
+        retry_policy=RetryPolicy,
     ):
+
+        retries = (
+            cls.DEFAULT_RETRIES
+            if retries is None
+            else retries
+        )
+
+        delays = (
+            cls.DEFAULT_DELAYS
+            if delays is None
+            else delays
+        )
 
         last_error = None
 
@@ -22,28 +46,40 @@ class RetryService:
 
                 return func()
 
-            except Exception as e:
+            except Exception as error:
 
-                last_error = e
+                last_error = error
 
-                if attempt == retries - 1:
-                    break
+                if not retry_policy.should_retry(
+                    error,
+                ):
 
-                delay = delays[min(attempt, len(delays) - 1)]
+                    raise
+
+                if attempt >= retries - 1:
+
+                    raise
+
+                delay = (
+                    delays[
+                        min(
+                            attempt,
+                            len(delays) - 1,
+                        )
+                    ]
+                )
 
                 logger.warning(
-                    "Retry %s/%s in %s sec: %s",
+                    "Retry attempt %s/%s after error: %s. "
+                    "Waiting %s seconds.",
                     attempt + 1,
                     retries,
+                    error,
                     delay,
-                    str(e),
                 )
 
-                print(
-                    f"⚠ Retry {attempt + 1}/{retries} "
-                    f"in {delay}s..."
+                time.sleep(
+                    delay,
                 )
-
-                time.sleep(delay)
 
         raise last_error

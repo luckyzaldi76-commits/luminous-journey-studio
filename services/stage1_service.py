@@ -1,7 +1,10 @@
 from config.settings import STAGE1_MAX_TOKENS
 
+from luminous.infrastructure.templates.template_loader import (
+    TemplateLoader,
+)
+
 from services.fallback_service import FallbackService
-from services.template_loader import TemplateLoader
 from services.validator_service import ValidatorService
 
 
@@ -28,9 +31,9 @@ class Stage1Service:
     def validate(
         self,
         response: str,
-    ) -> None:
+    ) -> dict:
 
-        ValidatorService.require_sections(
+        return ValidatorService.require_sections(
             response,
             "TITLE",
             "SCRIPT",
