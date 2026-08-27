@@ -11,16 +11,20 @@ class AIService:
         provider_name: str,
     ):
 
-        self.provider_name = provider_name.strip().lower()
+        self.provider_name = (
+            provider_name.strip().lower()
+        )
 
         self.provider = ProviderFactory.create(
             self.provider_name,
         )
 
-    def _providers(self):
+    def _provider_names(self):
+
         names = []
 
         if self.provider_name:
+
             names.append(
                 self.provider_name,
             )
@@ -37,9 +41,7 @@ class AIService:
                     name,
                 )
 
-        for name in names:
-
-            yield name
+        return names
 
     def _generate_with_provider(
         self,
@@ -71,24 +73,24 @@ class AIService:
 
         errors = []
 
-        for provider_name in self._providers():
+        for provider_name in self._provider_names():
 
             try:
 
-                response = self._generate_with_provider(
-
-                    provider_name,
-
-                    prompt,
-
-                    max_tokens,
-
+                response = (
+                    self._generate_with_provider(
+                        provider_name,
+                        prompt,
+                        max_tokens,
+                    )
                 )
 
                 self.provider_name = provider_name
 
-                self.provider = ProviderFactory.create(
-                    provider_name,
+                self.provider = (
+                    ProviderFactory.create(
+                        provider_name,
+                    )
                 )
 
                 return response
@@ -102,10 +104,45 @@ class AIService:
         raise RuntimeError(
 
             "All AI providers failed: "
-
             + " | ".join(errors)
 
         )
+
+    def _stream_with_provider(
+        self,
+        provider_name: str,
+        prompt: str,
+        max_tokens: int,
+    ):
+
+        provider = ProviderFactory.create(
+            provider_name,
+        )
+
+        chunks = RetryService.execute(
+
+            lambda: provider.stream(
+                prompt,
+                max_tokens=max_tokens,
+            ),
+
+            retry_policy=RetryPolicy,
+
+        )
+
+        yielded = False
+
+        for chunk in chunks:
+
+            yielded = True
+
+            yield chunk
+
+        if not yielded:
+
+            raise RuntimeError(
+                "Provider returned an empty stream."
+            )
 
     def stream(
         self,
@@ -115,21 +152,50 @@ class AIService:
 
         def runner():
 
-            yield from self.provider.stream(
+            errors = []
 
-                prompt,
+            for provider_name in (
+                self._provider_names()
+            ):
 
-                max_tokens=max_tokens,
+                try:
+
+                    for chunk in (
+                        self._stream_with_provider(
+                            provider_name,
+                            prompt,
+                            max_tokens,
+                        )
+                    ):
+
+                        yield chunk
+
+                    self.provider_name = (
+                        provider_name
+                    )
+
+                    self.provider = (
+                        ProviderFactory.create(
+                            provider_name,
+                        )
+                    )
+
+                    return
+
+                except Exception as error:
+
+                    errors.append(
+                        f"{provider_name}: {error}"
+                    )
+
+            raise RuntimeError(
+
+                "All AI stream providers failed: "
+                + " | ".join(errors)
 
             )
 
-        return RetryService.execute(
-
-            runner,
-
-            retry_policy=RetryPolicy,
-
-        )
+        return runner()
 
     @property
     def name(
