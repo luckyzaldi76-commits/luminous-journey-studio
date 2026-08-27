@@ -12,10 +12,14 @@ TESTS = (
     "tests.test_fallback",
     "tests.test_fallback_routing",
     "tests.test_provider_failover",
+    "tests.test_retry_policy",
 )
 
 
-def run(test: str):
+def run(
+    test: str,
+):
+
     print("=" * 60)
     print(test)
     print("=" * 60)
@@ -29,9 +33,13 @@ def run(test: str):
     )
 
     if result.returncode != 0:
+
         print()
         print(f"FAILED : {test}")
-        sys.exit(result.returncode)
+
+        sys.exit(
+            result.returncode,
+        )
 
     print()
     print(f"PASSED : {test}")
@@ -39,6 +47,7 @@ def run(test: str):
 
 
 def main():
+
     print()
     print("=" * 60)
     print("LUMINOUS JOURNEY TEST SUITE")
@@ -48,7 +57,9 @@ def main():
     passed = 0
 
     for test in TESTS:
+
         run(test)
+
         passed += 1
 
     print("=" * 60)
@@ -59,4 +70,5 @@ def main():
 
 
 if __name__ == "__main__":
+
     main()
