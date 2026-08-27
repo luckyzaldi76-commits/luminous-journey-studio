@@ -1,5 +1,6 @@
 from providers.factory import ProviderFactory
 
+from services.provider_health import provider_health
 from services.retry_policy import RetryPolicy
 from services.retry_service import RetryService
 
@@ -43,6 +44,14 @@ class AIService:
 
         return names
 
+    def _available_provider_names(self):
+
+        return tuple(
+            name
+            for name in self._provider_names()
+            if provider_health.available(name)
+        )
+
     def _generate_with_provider(
         self,
         provider_name: str,
@@ -54,16 +63,33 @@ class AIService:
             provider_name,
         )
 
-        return RetryService.execute(
+        try:
 
-            lambda: provider.generate(
-                prompt,
-                max_tokens=max_tokens,
-            ),
+            response = RetryService.execute(
 
-            retry_policy=RetryPolicy,
+                lambda: provider.generate(
+                    prompt,
+                    max_tokens=max_tokens,
+                ),
 
+                retry_policy=RetryPolicy,
+
+            )
+
+        except Exception as error:
+
+            provider_health.record_failure(
+                provider_name,
+                error,
+            )
+
+            raise
+
+        provider_health.record_success(
+            provider_name,
         )
+
+        return response
 
     def generate(
         self,
@@ -73,7 +99,9 @@ class AIService:
 
         errors = []
 
-        for provider_name in self._provider_names():
+        for provider_name in (
+            self._available_provider_names()
+        ):
 
             try:
 
@@ -101,6 +129,12 @@ class AIService:
                     f"{provider_name}: {error}"
                 )
 
+        if not errors:
+
+            raise RuntimeError(
+                "All AI providers are temporarily unavailable."
+            )
+
         raise RuntimeError(
 
             "All AI providers failed: "
@@ -119,30 +153,45 @@ class AIService:
             provider_name,
         )
 
-        chunks = RetryService.execute(
+        try:
 
-            lambda: provider.stream(
-                prompt,
-                max_tokens=max_tokens,
-            ),
+            chunks = RetryService.execute(
 
-            retry_policy=RetryPolicy,
+                lambda: provider.stream(
+                    prompt,
+                    max_tokens=max_tokens,
+                ),
 
-        )
+                retry_policy=RetryPolicy,
 
-        yielded = False
-
-        for chunk in chunks:
-
-            yielded = True
-
-            yield chunk
-
-        if not yielded:
-
-            raise RuntimeError(
-                "Provider returned an empty stream."
             )
+
+            yielded = False
+
+            for chunk in chunks:
+
+                yielded = True
+
+                yield chunk
+
+            if not yielded:
+
+                raise RuntimeError(
+                    "Provider returned an empty stream."
+                )
+
+        except Exception as error:
+
+            provider_health.record_failure(
+                provider_name,
+                error,
+            )
+
+            raise
+
+        provider_health.record_success(
+            provider_name,
+        )
 
     def stream(
         self,
@@ -155,7 +204,7 @@ class AIService:
             errors = []
 
             for provider_name in (
-                self._provider_names()
+                self._available_provider_names()
             ):
 
                 try:
@@ -187,6 +236,12 @@ class AIService:
                     errors.append(
                         f"{provider_name}: {error}"
                     )
+
+            if not errors:
+
+                raise RuntimeError(
+                    "All AI stream providers are temporarily unavailable."
+                )
 
             raise RuntimeError(
 
