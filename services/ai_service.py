@@ -11,11 +11,55 @@ class AIService:
         provider_name: str,
     ):
 
-        self.provider_name = provider_name
+        self.provider_name = provider_name.strip().lower()
 
         self.provider = ProviderFactory.create(
+            self.provider_name,
+        )
 
+    def _providers(self):
+        names = []
+
+        if self.provider_name:
+            names.append(
+                self.provider_name,
+            )
+
+        for name in (
+            "openrouter",
+            "gemini",
+            "mock",
+        ):
+
+            if name not in names:
+
+                names.append(
+                    name,
+                )
+
+        for name in names:
+
+            yield name
+
+    def _generate_with_provider(
+        self,
+        provider_name: str,
+        prompt: str,
+        max_tokens: int,
+    ) -> str:
+
+        provider = ProviderFactory.create(
             provider_name,
+        )
+
+        return RetryService.execute(
+
+            lambda: provider.generate(
+                prompt,
+                max_tokens=max_tokens,
+            ),
+
+            retry_policy=RetryPolicy,
 
         )
 
@@ -25,17 +69,41 @@ class AIService:
         max_tokens: int = 512,
     ) -> str:
 
-        return RetryService.execute(
+        errors = []
 
-            lambda: self.provider.generate(
+        for provider_name in self._providers():
 
-                prompt,
+            try:
 
-                max_tokens=max_tokens,
+                response = self._generate_with_provider(
 
-            ),
+                    provider_name,
 
-            retry_policy=RetryPolicy,
+                    prompt,
+
+                    max_tokens,
+
+                )
+
+                self.provider_name = provider_name
+
+                self.provider = ProviderFactory.create(
+                    provider_name,
+                )
+
+                return response
+
+            except Exception as error:
+
+                errors.append(
+                    f"{provider_name}: {error}"
+                )
+
+        raise RuntimeError(
+
+            "All AI providers failed: "
+
+            + " | ".join(errors)
 
         )
 
