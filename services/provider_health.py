@@ -1,6 +1,8 @@
 ﻿from dataclasses import dataclass, field
 from time import monotonic
 
+from services.retry_policy import RetryPolicy
+
 
 @dataclass
 class ProviderHealth:
@@ -15,6 +17,57 @@ class ProviderHealth:
         default=60,
         repr=False,
     )
+
+    _QUOTA_COOLDOWN: int = field(
+        default=300,
+        repr=False,
+    )
+
+    _SERVER_COOLDOWN: int = field(
+        default=30,
+        repr=False,
+    )
+
+    def _cooldown_for(
+        self,
+        error: Exception,
+    ) -> int:
+
+        message = str(
+            error
+        ).lower()
+
+        for item in RetryPolicy.NO_RETRY:
+
+            if item in message:
+
+                if item in {
+                    "401",
+                    "402",
+                    "403",
+                    "429",
+                    "quota",
+                    "resource_exhausted",
+                    "insufficient",
+                    "credit",
+                    "invalid api key",
+                    "invalid_api_key",
+                    "unauthorized",
+                    "permission",
+                    "forbidden",
+                }:
+
+                    return self._QUOTA_COOLDOWN
+
+                return self._DEFAULT_COOLDOWN
+
+        for item in RetryPolicy.RETRY:
+
+            if item in message:
+
+                return self._SERVER_COOLDOWN
+
+        return self._DEFAULT_COOLDOWN
 
     def record_success(
         self,
@@ -40,7 +93,9 @@ class ProviderHealth:
 
         if cooldown is None:
 
-            cooldown = self._DEFAULT_COOLDOWN
+            cooldown = self._cooldown_for(
+                error,
+            )
 
         self.disabled_until = (
             monotonic()
