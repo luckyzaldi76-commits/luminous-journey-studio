@@ -15,6 +15,7 @@ TESTS = (
     "tests.test_retry_policy",
     "tests.test_provider_health",
     "tests.test_health_aware_failover",
+    "tests.test_provider_cooldowns",
 )
 
 
