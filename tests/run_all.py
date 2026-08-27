@@ -13,6 +13,7 @@ TESTS = (
     "tests.test_fallback_routing",
     "tests.test_provider_failover",
     "tests.test_retry_policy",
+    "tests.test_provider_health",
 )
 
 
