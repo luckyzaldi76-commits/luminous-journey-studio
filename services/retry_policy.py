@@ -1,24 +1,31 @@
 class RetryPolicy:
 
     NO_RETRY = (
+        "400",
         "401",
         "402",
         "403",
         "404",
+        "405",
+        "406",
+        "409",
+        "422",
         "429",
         "quota",
         "resource_exhausted",
         "insufficient",
         "credit",
         "invalid api key",
+        "invalid_api_key",
         "unauthorized",
         "permission",
         "forbidden",
+        "content policy",
+        "safety",
     )
 
     RETRY = (
         "408",
-        "409",
         "425",
         "500",
         "502",
@@ -35,6 +42,7 @@ class RetryPolicy:
         "internal server error",
         "bad gateway",
         "gateway timeout",
+        "server error",
     )
 
     @classmethod
@@ -43,7 +51,9 @@ class RetryPolicy:
         error: Exception,
     ) -> bool:
 
-        message = str(error).lower()
+        message = str(
+            error
+        ).lower()
 
         for item in cls.NO_RETRY:
 
