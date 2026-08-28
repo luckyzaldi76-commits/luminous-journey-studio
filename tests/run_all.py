@@ -21,6 +21,7 @@ TESTS = (
     "tests.test_provider_health_expiry",
     "tests.test_provider_health_concurrency",
     "tests.test_provider_health_observability",
+    "tests.test_cli_health",
 )
 
 

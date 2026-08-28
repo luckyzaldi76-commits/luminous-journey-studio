@@ -1,94 +1,142 @@
 import argparse
-from pathlib import Path
 
-from config.settings import OUTPUT_DIR
-from engine.production_engine import ProductionEngine
-from luminous.kernel.registry import WorkflowRegistry
-from luminous.workflows.dailygospelworkflow import (
-    DailyGospelWorkflow,
+from config.settings import (
+    AI_PROVIDER,
+    GEMINI_MODEL,
+    OPENROUTER_MODEL,
+    USE_MOCK,
+    VERSION,
 )
+from services.provider_health import provider_health
 
 
-WorkflowRegistry.register(
+def _print_header():
 
-    "daily_gospel",
+    print("=" * 60)
+    print("LUMINOUS JOURNEY STUDIO")
+    print("=" * 60)
 
-    DailyGospelWorkflow,
+    print(
+        f"Version        : {VERSION}"
+    )
 
-)
+    print(
+        f"AI Provider    : {AI_PROVIDER}"
+    )
+
+    print(
+        f"Mock           : {USE_MOCK}"
+    )
+
+    print(
+        f"Gemini Model   : {GEMINI_MODEL}"
+    )
+
+    print(
+        f"OpenRouter     : {OPENROUTER_MODEL}"
+    )
+
+    print("=" * 60)
 
 
-def main():
+def _print_health():
+
+    snapshot = provider_health.snapshot()
+
+    print()
+    print("=" * 60)
+    print("PROVIDER HEALTH")
+    print("=" * 60)
+
+    if not snapshot:
+
+        print(
+            "No provider health state."
+        )
+
+        print("=" * 60)
+
+        return
+
+    for name, health in snapshot.items():
+
+        print(
+            f"Provider       : {name}"
+        )
+
+        print(
+            f"Status         : {health['status']}"
+        )
+
+        print(
+            f"Failures       : {health['failures']}"
+        )
+
+        print(
+            f"Available      : {health['available']}"
+        )
+
+        print(
+            "Remaining      : "
+            f"{health['remaining_cooldown']:.1f}s"
+        )
+
+        if health["last_error"]:
+
+            print(
+                f"Last Error     : "
+                f"{health['last_error']}"
+            )
+
+        print("-" * 60)
+
+    print("=" * 60)
+
+
+def build_parser():
 
     parser = argparse.ArgumentParser(
-
-        prog="luminous",
-
-        description="Luminous Journey Studio CLI",
-
+        prog="ljcli",
+        description=(
+            "Luminous Journey Studio CLI"
+        ),
     )
 
-    parser.add_argument(
-
-        "workflow",
-
-        choices=WorkflowRegistry.names(),
-
-        help="Workflow name",
-
+    subparsers = parser.add_subparsers(
+        dest="command",
     )
 
-    parser.add_argument(
-
-        "--gospel",
-
-        required=True,
-
-        help="Gospel passage",
-
+    subparsers.add_parser(
+        "health",
+        help="Show provider health",
     )
 
-    parser.add_argument(
+    return parser
 
-        "--language",
 
-        default="English",
+def main(
+    argv=None,
+):
 
+    parser = build_parser()
+
+    args = parser.parse_args(
+        argv,
     )
 
-    parser.add_argument(
+    _print_header()
 
-        "--audience",
+    if args.command == "health":
 
-        default="Adults",
+        _print_health()
 
-    )
+        return 0
 
-    parser.add_argument(
-
-        "--output",
-
-        default=str(OUTPUT_DIR),
-
-    )
-
-    args = parser.parse_args()
-
-    ProductionEngine().run(
-
-        workflow_name=args.workflow,
-
-        gospel=args.gospel,
-
-        language=args.language,
-
-        audience=args.audience,
-
-        output_dir=Path(args.output),
-
-    )
+    return 0
 
 
 if __name__ == "__main__":
 
-    main()
+    raise SystemExit(
+        main()
+    )
