@@ -19,6 +19,7 @@ TESTS = (
     "tests.test_provider_health_persistence",
     "tests.test_provider_health_cross_process",
     "tests.test_provider_health_expiry",
+    "tests.test_provider_health_concurrency",
 )
 
 
