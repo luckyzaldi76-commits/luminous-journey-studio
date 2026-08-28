@@ -5,8 +5,6 @@ import json
 import os
 import tempfile
 
-from services.retry_policy import RetryPolicy
-
 
 STATE_FILE = Path(
     os.getenv(
@@ -133,6 +131,30 @@ class ProviderHealth:
             >= self.disabled_until
         )
 
+    def status(
+        self,
+    ) -> str:
+
+        if self.is_available():
+
+            if self.failures == 0:
+
+                return "healthy"
+
+            return "available"
+
+        return "cooldown"
+
+    def remaining_cooldown(
+        self,
+    ) -> float:
+
+        return max(
+            0.0,
+            self.disabled_until
+            - monotonic(),
+        )
+
     def reset(
         self,
     ):
@@ -165,14 +187,10 @@ class ProviderHealthRegistry:
         disabled_until: float,
     ) -> float:
 
-        remaining = (
-            disabled_until
-            - monotonic()
-        )
-
         return max(
             0.0,
-            remaining,
+            disabled_until
+            - monotonic(),
         )
 
     def _load(
@@ -294,7 +312,9 @@ class ProviderHealthRegistry:
                 - elapsed,
             )
 
-            health = ProviderHealth(
+            self._providers[
+                name.strip().lower()
+            ] = ProviderHealth(
                 failures=failures,
                 last_error=last_error,
                 disabled_until=(
@@ -304,10 +324,6 @@ class ProviderHealthRegistry:
                     else 0.0
                 ),
             )
-
-            self._providers[
-                name.strip().lower()
-            ] = health
 
     def _save(
         self,
@@ -401,6 +417,24 @@ class ProviderHealthRegistry:
             provider_name,
         ).is_available()
 
+    def status(
+        self,
+        provider_name: str,
+    ) -> str:
+
+        return self.get(
+            provider_name,
+        ).status()
+
+    def remaining_cooldown(
+        self,
+        provider_name: str,
+    ) -> float:
+
+        return self.get(
+            provider_name,
+        ).remaining_cooldown()
+
     def record_success(
         self,
         provider_name: str,
@@ -459,10 +493,13 @@ class ProviderHealthRegistry:
 
         return {
             name: {
+                "status": health.status(),
                 "failures": health.failures,
                 "last_error": health.last_error,
-                "disabled_until": health.disabled_until,
                 "available": health.is_available(),
+                "remaining_cooldown": (
+                    health.remaining_cooldown()
+                ),
             }
             for name, health
             in self._providers.items()
