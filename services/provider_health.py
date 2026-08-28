@@ -1,5 +1,19 @@
 ﻿from dataclasses import dataclass, field
-from time import monotonic
+from pathlib import Path
+from time import monotonic, time
+import json
+import os
+import tempfile
+
+from services.retry_policy import RetryPolicy
+
+
+STATE_FILE = Path(
+    os.getenv(
+        "PROVIDER_HEALTH_FILE",
+        "config/provider_health.json",
+    )
+)
 
 
 @dataclass
@@ -44,7 +58,10 @@ class ProviderHealth:
         self.last_error = str(error)
 
         if cooldown is None:
-            cooldown = self._cooldown_for(error)
+
+            cooldown = self._cooldown_for(
+                error,
+            )
 
         self.disabled_until = (
             monotonic()
@@ -76,6 +93,7 @@ class ProviderHealth:
                 "forbidden",
             )
         ):
+
             return self._QUOTA_COOLDOWN
 
         if any(
@@ -101,6 +119,7 @@ class ProviderHealth:
                 "gateway timeout",
             )
         ):
+
             return self._SERVER_COOLDOWN
 
         return self._DEFAULT_COOLDOWN
@@ -127,12 +146,236 @@ class ProviderHealthRegistry:
 
     def __init__(
         self,
+        state_file: Path | str = STATE_FILE,
     ):
+
+        self.state_file = Path(
+            state_file,
+        )
 
         self._providers: dict[
             str,
             ProviderHealth,
         ] = {}
+
+        self._load()
+
+    def _remaining_cooldown(
+        self,
+        disabled_until: float,
+    ) -> float:
+
+        remaining = (
+            disabled_until
+            - monotonic()
+        )
+
+        return max(
+            0.0,
+            remaining,
+        )
+
+    def _load(
+        self,
+    ):
+
+        self._providers.clear()
+
+        if not self.state_file.exists():
+
+            return
+
+        try:
+
+            data = json.loads(
+                self.state_file.read_text(
+                    encoding="utf-8",
+                )
+            )
+
+        except (
+            OSError,
+            ValueError,
+            TypeError,
+        ):
+
+            return
+
+        if not isinstance(
+            data,
+            dict,
+        ):
+
+            return
+
+        saved_at = data.get(
+            "saved_at",
+        )
+
+        providers = data.get(
+            "providers",
+            {},
+        )
+
+        if not isinstance(
+            providers,
+            dict,
+        ):
+
+            return
+
+        elapsed = 0.0
+
+        if isinstance(
+            saved_at,
+            (int, float),
+        ):
+
+            elapsed = max(
+                0.0,
+                time() - saved_at,
+            )
+
+        for name, value in providers.items():
+
+            if not isinstance(
+                name,
+                str,
+            ):
+
+                continue
+
+            if not isinstance(
+                value,
+                dict,
+            ):
+
+                continue
+
+            failures = value.get(
+                "failures",
+                0,
+            )
+
+            last_error = value.get(
+                "last_error",
+                "",
+            )
+
+            remaining = value.get(
+                "remaining_cooldown",
+                0,
+            )
+
+            if not isinstance(
+                failures,
+                int,
+            ):
+
+                failures = 0
+
+            if not isinstance(
+                last_error,
+                str,
+            ):
+
+                last_error = ""
+
+            if not isinstance(
+                remaining,
+                (int, float),
+            ):
+
+                remaining = 0.0
+
+            remaining = max(
+                0.0,
+                float(remaining)
+                - elapsed,
+            )
+
+            health = ProviderHealth(
+                failures=failures,
+                last_error=last_error,
+                disabled_until=(
+                    monotonic()
+                    + remaining
+                    if remaining > 0
+                    else 0.0
+                ),
+            )
+
+            self._providers[
+                name.strip().lower()
+            ] = health
+
+    def _save(
+        self,
+    ):
+
+        try:
+
+            self.state_file.parent.mkdir(
+                parents=True,
+                exist_ok=True,
+            )
+
+            payload = {
+                "saved_at": time(),
+                "providers": {
+                    name: {
+                        "failures": health.failures,
+                        "last_error": health.last_error,
+                        "remaining_cooldown": (
+                            self._remaining_cooldown(
+                                health.disabled_until,
+                            )
+                        ),
+                    }
+                    for name, health
+                    in self._providers.items()
+                },
+            }
+
+            fd, temp_name = tempfile.mkstemp(
+                prefix=".provider_health_",
+                suffix=".tmp",
+                dir=self.state_file.parent,
+                text=True,
+            )
+
+            try:
+
+                with os.fdopen(
+                    fd,
+                    "w",
+                    encoding="utf-8",
+                ) as handle:
+
+                    json.dump(
+                        payload,
+                        handle,
+                        indent=2,
+                    )
+
+                os.replace(
+                    temp_name,
+                    self.state_file,
+                )
+
+            finally:
+
+                if os.path.exists(
+                    temp_name,
+                ):
+
+                    os.remove(
+                        temp_name,
+                    )
+
+        except OSError:
+
+            pass
 
     def get(
         self,
@@ -167,6 +410,8 @@ class ProviderHealthRegistry:
             provider_name,
         ).record_success()
 
+        self._save()
+
     def record_failure(
         self,
         provider_name: str,
@@ -181,6 +426,8 @@ class ProviderHealthRegistry:
             cooldown,
         )
 
+        self._save()
+
     def reset(
         self,
         provider_name: str,
@@ -190,11 +437,21 @@ class ProviderHealthRegistry:
             provider_name,
         ).reset()
 
+        self._save()
+
     def clear(
         self,
     ):
 
         self._providers.clear()
+
+        self._save()
+
+    def reload(
+        self,
+    ):
+
+        self._load()
 
     def snapshot(
         self,
