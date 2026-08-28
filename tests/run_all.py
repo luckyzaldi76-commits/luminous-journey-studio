@@ -16,6 +16,7 @@ TESTS = (
     "tests.test_provider_health",
     "tests.test_health_aware_failover",
     "tests.test_provider_cooldowns",
+    "tests.test_provider_health_persistence",
 )
 
 
