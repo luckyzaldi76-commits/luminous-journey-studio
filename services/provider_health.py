@@ -1,8 +1,6 @@
 ﻿from dataclasses import dataclass, field
 from time import monotonic
 
-from services.retry_policy import RetryPolicy
-
 
 @dataclass
 class ProviderHealth:
@@ -28,55 +26,12 @@ class ProviderHealth:
         repr=False,
     )
 
-    def _cooldown_for(
-        self,
-        error: Exception,
-    ) -> int:
-
-        message = str(
-            error
-        ).lower()
-
-        for item in RetryPolicy.NO_RETRY:
-
-            if item in message:
-
-                if item in {
-                    "401",
-                    "402",
-                    "403",
-                    "429",
-                    "quota",
-                    "resource_exhausted",
-                    "insufficient",
-                    "credit",
-                    "invalid api key",
-                    "invalid_api_key",
-                    "unauthorized",
-                    "permission",
-                    "forbidden",
-                }:
-
-                    return self._QUOTA_COOLDOWN
-
-                return self._DEFAULT_COOLDOWN
-
-        for item in RetryPolicy.RETRY:
-
-            if item in message:
-
-                return self._SERVER_COOLDOWN
-
-        return self._DEFAULT_COOLDOWN
-
     def record_success(
         self,
     ):
 
         self.failures = 0
-
         self.last_error = ""
-
         self.disabled_until = 0.0
 
     def record_failure(
@@ -86,21 +41,69 @@ class ProviderHealth:
     ):
 
         self.failures += 1
-
-        self.last_error = str(
-            error,
-        )
+        self.last_error = str(error)
 
         if cooldown is None:
-
-            cooldown = self._cooldown_for(
-                error,
-            )
+            cooldown = self._cooldown_for(error)
 
         self.disabled_until = (
             monotonic()
             + cooldown
         )
+
+    def _cooldown_for(
+        self,
+        error: Exception,
+    ) -> int:
+
+        message = str(error).lower()
+
+        if any(
+            item in message
+            for item in (
+                "401",
+                "402",
+                "403",
+                "429",
+                "quota",
+                "resource_exhausted",
+                "insufficient",
+                "credit",
+                "invalid api key",
+                "invalid_api_key",
+                "unauthorized",
+                "permission",
+                "forbidden",
+            )
+        ):
+            return self._QUOTA_COOLDOWN
+
+        if any(
+            item in message
+            for item in (
+                "408",
+                "409",
+                "425",
+                "500",
+                "502",
+                "503",
+                "504",
+                "timeout",
+                "timed out",
+                "connection",
+                "connection reset",
+                "connection aborted",
+                "temporarily",
+                "temporary",
+                "unavailable",
+                "internal server error",
+                "bad gateway",
+                "gateway timeout",
+            )
+        ):
+            return self._SERVER_COOLDOWN
+
+        return self._DEFAULT_COOLDOWN
 
     def is_available(
         self,
@@ -116,9 +119,7 @@ class ProviderHealth:
     ):
 
         self.failures = 0
-
         self.last_error = ""
-
         self.disabled_until = 0.0
 
 
@@ -203,6 +204,7 @@ class ProviderHealthRegistry:
             name: {
                 "failures": health.failures,
                 "last_error": health.last_error,
+                "disabled_until": health.disabled_until,
                 "available": health.is_available(),
             }
             for name, health
