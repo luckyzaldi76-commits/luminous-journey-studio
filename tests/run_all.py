@@ -34,6 +34,7 @@ TESTS = (
     "tests.test_production_startup_health",
     "tests.test_final_production_hardening",
     "tests.test_release_gate",
+    "tests.test_repository_audit",
 )
 
 
