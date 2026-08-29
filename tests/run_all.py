@@ -33,6 +33,7 @@ TESTS = (
     "tests.test_secret_safety",
     "tests.test_production_startup_health",
     "tests.test_final_production_hardening",
+    "tests.test_release_gate",
 )
 
 
