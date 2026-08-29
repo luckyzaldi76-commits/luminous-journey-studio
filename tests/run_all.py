@@ -31,6 +31,7 @@ TESTS = (
     "tests.test_configuration_failure_handling",
     "tests.test_startup_validation",
     "tests.test_secret_safety",
+    "tests.test_production_startup_health",
 )
 
 
