@@ -28,6 +28,7 @@ TESTS = (
     "tests.test_final_reliability",
     "tests.test_production_config",
     "tests.test_environment_safety",
+    "tests.test_configuration_failure_handling",
 )
 
 
