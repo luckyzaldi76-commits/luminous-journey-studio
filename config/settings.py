@@ -8,7 +8,9 @@ from dotenv import load_dotenv
 # PATH
 # ==========================================================
 
-PROJECT_DIR = Path(__file__).resolve().parent.parent
+PROJECT_DIR = Path(
+    __file__
+).resolve().parent.parent
 
 ENV_FILE = PROJECT_DIR / ".env"
 
@@ -69,6 +71,8 @@ TEMPLATE_DIR = PROJECT_DIR / "templates"
 OUTPUT_DIR = PROJECT_DIR / "exports"
 
 LOG_DIR = PROJECT_DIR / "logs"
+
+CONFIG_DIR = PROJECT_DIR / "config"
 
 
 # ==========================================================
@@ -144,7 +148,9 @@ STAGE4_MAX_TOKENS = int(
     )
 )
 
-OPENROUTER_MAX_TOKENS = STAGE1_MAX_TOKENS
+OPENROUTER_MAX_TOKENS = (
+    STAGE1_MAX_TOKENS
+)
 
 
 # ==========================================================
@@ -189,6 +195,42 @@ ENABLE_EVENT_BUS = True
 ENABLE_ANALYTICS = True
 
 ENABLE_CACHE = False
+
+
+# ==========================================================
+# PROVIDER HEALTH
+# ==========================================================
+
+PROVIDER_HEALTH_FILE = Path(
+    os.getenv(
+        "PROVIDER_HEALTH_FILE",
+        str(
+            CONFIG_DIR
+            / "provider_health.json"
+        ),
+    )
+)
+
+PROVIDER_HEALTH_DEFAULT_COOLDOWN = int(
+    os.getenv(
+        "PROVIDER_HEALTH_DEFAULT_COOLDOWN",
+        "60",
+    )
+)
+
+PROVIDER_HEALTH_QUOTA_COOLDOWN = int(
+    os.getenv(
+        "PROVIDER_HEALTH_QUOTA_COOLDOWN",
+        "300",
+    )
+)
+
+PROVIDER_HEALTH_SERVER_COOLDOWN = int(
+    os.getenv(
+        "PROVIDER_HEALTH_SERVER_COOLDOWN",
+        "30",
+    )
+)
 
 
 # ==========================================================
