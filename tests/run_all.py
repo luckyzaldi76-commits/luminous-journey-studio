@@ -24,6 +24,8 @@ TESTS = (
     "tests.test_cli_health",
     "tests.test_ai_service_health_integration",
     "tests.test_ai_service_health_routing",
+    "tests.test_ai_service_stream_health_routing",
+    "tests.test_final_reliability",
 )
 
 
