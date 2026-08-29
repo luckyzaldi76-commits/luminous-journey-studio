@@ -23,6 +23,7 @@ TESTS = (
     "tests.test_provider_health_observability",
     "tests.test_cli_health",
     "tests.test_ai_service_health_integration",
+    "tests.test_ai_service_health_routing",
 )
 
 
