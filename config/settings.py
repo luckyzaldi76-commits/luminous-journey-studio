@@ -8,11 +8,18 @@ from dotenv import load_dotenv
 # PATH
 # ==========================================================
 
-PROJECT_DIR = Path(
-    __file__
-).resolve().parent.parent
+PROJECT_DIR = (
+    Path(__file__)
+    .resolve()
+    .parent.parent
+)
 
-ENV_FILE = PROJECT_DIR / ".env"
+ENV_FILE = Path(
+    os.getenv(
+        "LUMINOUS_JOURNEY_ENV_FILE",
+        str(PROJECT_DIR / ".env"),
+    )
+)
 
 load_dotenv(
     dotenv_path=ENV_FILE,

@@ -27,12 +27,11 @@ TESTS = (
     "tests.test_ai_service_stream_health_routing",
     "tests.test_final_reliability",
     "tests.test_production_config",
+    "tests.test_environment_safety",
 )
 
 
-def run(
-    test: str,
-):
+def run(test: str):
 
     print("=" * 60)
     print(test)
@@ -54,7 +53,7 @@ def run(
         )
 
         sys.exit(
-            result.returncode,
+            result.returncode
         )
 
     print()
