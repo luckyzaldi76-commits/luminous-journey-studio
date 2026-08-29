@@ -22,6 +22,7 @@ TESTS = (
     "tests.test_provider_health_concurrency",
     "tests.test_provider_health_observability",
     "tests.test_cli_health",
+    "tests.test_ai_service_health_integration",
 )
 
 
@@ -44,14 +45,18 @@ def run(
     if result.returncode != 0:
 
         print()
-        print(f"FAILED : {test}")
+        print(
+            f"FAILED : {test}"
+        )
 
         sys.exit(
             result.returncode,
         )
 
     print()
-    print(f"PASSED : {test}")
+    print(
+        f"PASSED : {test}"
+    )
     print()
 
 
@@ -74,7 +79,9 @@ def main():
     print("=" * 60)
     print("ALL TESTS PASSED")
     print("=" * 60)
-    print(f"Executed : {passed}")
+    print(
+        f"Executed : {passed}"
+    )
     print()
 
 
