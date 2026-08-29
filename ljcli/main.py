@@ -56,7 +56,7 @@ def _print_health():
 
         print("=" * 60)
 
-        return
+        return 0
 
     for name, health in snapshot.items():
 
@@ -91,6 +91,8 @@ def _print_health():
         print("-" * 60)
 
     print("=" * 60)
+
+    return 0
 
 
 def build_parser():
@@ -128,9 +130,7 @@ def main(
 
     if args.command == "health":
 
-        _print_health()
-
-        return 0
+        return _print_health()
 
     return 0
 

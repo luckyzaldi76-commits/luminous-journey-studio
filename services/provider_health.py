@@ -1,6 +1,7 @@
 ﻿from dataclasses import dataclass, field
 from pathlib import Path
 from time import monotonic, time
+from threading import RLock
 import json
 import os
 import tempfile
@@ -71,7 +72,9 @@ class ProviderHealth:
         error: Exception,
     ) -> int:
 
-        message = str(error).lower()
+        message = str(
+            error
+        ).lower()
 
         if any(
             item in message
@@ -180,6 +183,8 @@ class ProviderHealthRegistry:
             ProviderHealth,
         ] = {}
 
+        self._lock = RLock()
+
         self._load()
 
     def _remaining_cooldown(
@@ -197,254 +202,270 @@ class ProviderHealthRegistry:
         self,
     ):
 
-        self._providers.clear()
+        with self._lock:
 
-        if not self.state_file.exists():
+            self._providers.clear()
 
-            return
+            if not self.state_file.exists():
 
-        try:
+                return
 
-            data = json.loads(
-                self.state_file.read_text(
-                    encoding="utf-8",
+            try:
+
+                data = json.loads(
+                    self.state_file.read_text(
+                        encoding="utf-8",
+                    )
                 )
-            )
 
-        except (
-            OSError,
-            ValueError,
-            TypeError,
-        ):
-
-            return
-
-        if not isinstance(
-            data,
-            dict,
-        ):
-
-            return
-
-        saved_at = data.get(
-            "saved_at",
-        )
-
-        providers = data.get(
-            "providers",
-            {},
-        )
-
-        if not isinstance(
-            providers,
-            dict,
-        ):
-
-            return
-
-        elapsed = 0.0
-
-        if isinstance(
-            saved_at,
-            (int, float),
-        ):
-
-            elapsed = max(
-                0.0,
-                time() - saved_at,
-            )
-
-        for name, value in providers.items():
-
-            if not isinstance(
-                name,
-                str,
+            except (
+                OSError,
+                ValueError,
+                TypeError,
             ):
 
-                continue
+                return
 
             if not isinstance(
-                value,
+                data,
                 dict,
             ):
 
-                continue
+                return
 
-            failures = value.get(
-                "failures",
-                0,
+            saved_at = data.get(
+                "saved_at",
             )
 
-            last_error = value.get(
-                "last_error",
-                "",
-            )
-
-            remaining = value.get(
-                "remaining_cooldown",
-                0,
+            providers = data.get(
+                "providers",
+                {},
             )
 
             if not isinstance(
-                failures,
-                int,
+                providers,
+                dict,
             ):
 
-                failures = 0
+                return
 
-            if not isinstance(
-                last_error,
-                str,
-            ):
+            elapsed = 0.0
 
-                last_error = ""
-
-            if not isinstance(
-                remaining,
+            if isinstance(
+                saved_at,
                 (int, float),
             ):
 
-                remaining = 0.0
+                elapsed = max(
+                    0.0,
+                    time() - saved_at,
+                )
 
-            remaining = max(
-                0.0,
-                float(remaining)
-                - elapsed,
-            )
+            for name, value in providers.items():
 
-            self._providers[
-                name.strip().lower()
-            ] = ProviderHealth(
-                failures=failures,
-                last_error=last_error,
-                disabled_until=(
-                    monotonic()
-                    + remaining
-                    if remaining > 0
-                    else 0.0
-                ),
-            )
+                if not isinstance(
+                    name,
+                    str,
+                ):
+
+                    continue
+
+                if not isinstance(
+                    value,
+                    dict,
+                ):
+
+                    continue
+
+                failures = value.get(
+                    "failures",
+                    0,
+                )
+
+                last_error = value.get(
+                    "last_error",
+                    "",
+                )
+
+                remaining = value.get(
+                    "remaining_cooldown",
+                    0,
+                )
+
+                if not isinstance(
+                    failures,
+                    int,
+                ):
+
+                    failures = 0
+
+                if not isinstance(
+                    last_error,
+                    str,
+                ):
+
+                    last_error = ""
+
+                if not isinstance(
+                    remaining,
+                    (int, float),
+                ):
+
+                    remaining = 0.0
+
+                remaining = max(
+                    0.0,
+                    float(remaining)
+                    - elapsed,
+                )
+
+                self._providers[
+                    name.strip().lower()
+                ] = ProviderHealth(
+                    failures=failures,
+                    last_error=last_error,
+                    disabled_until=(
+                        monotonic()
+                        + remaining
+                        if remaining > 0
+                        else 0.0
+                    ),
+                )
 
     def _save(
         self,
     ):
 
-        try:
-
-            self.state_file.parent.mkdir(
-                parents=True,
-                exist_ok=True,
-            )
-
-            payload = {
-                "saved_at": time(),
-                "providers": {
-                    name: {
-                        "failures": health.failures,
-                        "last_error": health.last_error,
-                        "remaining_cooldown": (
-                            self._remaining_cooldown(
-                                health.disabled_until,
-                            )
-                        ),
-                    }
-                    for name, health
-                    in self._providers.items()
-                },
-            }
-
-            fd, temp_name = tempfile.mkstemp(
-                prefix=".provider_health_",
-                suffix=".tmp",
-                dir=self.state_file.parent,
-                text=True,
-            )
+        with self._lock:
 
             try:
 
-                with os.fdopen(
-                    fd,
-                    "w",
-                    encoding="utf-8",
-                ) as handle:
-
-                    json.dump(
-                        payload,
-                        handle,
-                        indent=2,
-                    )
-
-                os.replace(
-                    temp_name,
-                    self.state_file,
+                self.state_file.parent.mkdir(
+                    parents=True,
+                    exist_ok=True,
                 )
 
-            finally:
+                payload = {
+                    "saved_at": time(),
+                    "providers": {
+                        name: {
+                            "failures": health.failures,
+                            "last_error": health.last_error,
+                            "remaining_cooldown": (
+                                self._remaining_cooldown(
+                                    health.disabled_until,
+                                )
+                            ),
+                        }
+                        for name, health
+                        in self._providers.items()
+                    },
+                }
 
-                if os.path.exists(
-                    temp_name,
-                ):
+                fd, temp_name = tempfile.mkstemp(
+                    prefix=".provider_health_",
+                    suffix=".tmp",
+                    dir=self.state_file.parent,
+                    text=True,
+                )
 
-                    os.remove(
+                try:
+
+                    with os.fdopen(
+                        fd,
+                        "w",
+                        encoding="utf-8",
+                    ) as handle:
+
+                        json.dump(
+                            payload,
+                            handle,
+                            indent=2,
+                        )
+
+                    os.replace(
                         temp_name,
+                        self.state_file,
                     )
 
-        except OSError:
+                finally:
 
-            pass
+                    if os.path.exists(
+                        temp_name,
+                    ):
+
+                        os.remove(
+                            temp_name,
+                        )
+
+            except OSError:
+
+                pass
 
     def get(
         self,
         provider_name: str,
     ) -> ProviderHealth:
 
-        name = provider_name.strip().lower()
+        with self._lock:
 
-        if name not in self._providers:
+            name = provider_name.strip().lower()
 
-            self._providers[name] = (
-                ProviderHealth()
-            )
+            if name not in self._providers:
 
-        return self._providers[name]
+                self._providers[
+                    name
+                ] = ProviderHealth()
+
+            return self._providers[
+                name
+            ]
 
     def available(
         self,
         provider_name: str,
     ) -> bool:
 
-        return self.get(
-            provider_name,
-        ).is_available()
+        with self._lock:
+
+            return self.get(
+                provider_name,
+            ).is_available()
 
     def status(
         self,
         provider_name: str,
     ) -> str:
 
-        return self.get(
-            provider_name,
-        ).status()
+        with self._lock:
+
+            return self.get(
+                provider_name,
+            ).status()
 
     def remaining_cooldown(
         self,
         provider_name: str,
     ) -> float:
 
-        return self.get(
-            provider_name,
-        ).remaining_cooldown()
+        with self._lock:
+
+            return self.get(
+                provider_name,
+            ).remaining_cooldown()
 
     def record_success(
         self,
         provider_name: str,
     ):
 
-        self.get(
-            provider_name,
-        ).record_success()
+        with self._lock:
 
-        self._save()
+            self.get(
+                provider_name,
+            ).record_success()
+
+            self._save()
 
     def record_failure(
         self,
@@ -453,57 +474,67 @@ class ProviderHealthRegistry:
         cooldown: int | None = None,
     ):
 
-        self.get(
-            provider_name,
-        ).record_failure(
-            error,
-            cooldown,
-        )
+        with self._lock:
 
-        self._save()
+            self.get(
+                provider_name,
+            ).record_failure(
+                error,
+                cooldown,
+            )
+
+            self._save()
 
     def reset(
         self,
         provider_name: str,
     ):
 
-        self.get(
-            provider_name,
-        ).reset()
+        with self._lock:
 
-        self._save()
+            self.get(
+                provider_name,
+            ).reset()
+
+            self._save()
 
     def clear(
         self,
     ):
 
-        self._providers.clear()
+        with self._lock:
 
-        self._save()
+            self._providers.clear()
+
+            self._save()
 
     def reload(
         self,
     ):
 
-        self._load()
+        with self._lock:
+
+            self._load()
 
     def snapshot(
         self,
     ) -> dict:
 
-        return {
-            name: {
-                "status": health.status(),
-                "failures": health.failures,
-                "last_error": health.last_error,
-                "available": health.is_available(),
-                "remaining_cooldown": (
-                    health.remaining_cooldown()
-                ),
+        with self._lock:
+
+            return {
+                name: {
+                    "status": health.status(),
+                    "failures": health.failures,
+                    "last_error": health.last_error,
+                    "available": health.is_available(),
+                    "remaining_cooldown": (
+                        health.remaining_cooldown()
+                    ),
+                }
+                for name, health
+                in self._providers.items()
             }
-            for name, health
-            in self._providers.items()
-        }
 
 
 provider_health = ProviderHealthRegistry()

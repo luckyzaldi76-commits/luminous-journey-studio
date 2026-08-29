@@ -100,31 +100,31 @@ provider_health.record_failure(
             in output
         )
 
-        print(
-            "PASS : CLI health command executes"
-        )
+    print(
+        "PASS : CLI health command executes"
+    )
 
-        print(
-            "PASS : CLI exposes provider status"
-        )
+    print(
+        "PASS : CLI exposes provider status"
+    )
 
-        print(
-            "PASS : CLI exposes provider failures"
-        )
+    print(
+        "PASS : CLI exposes provider failures"
+    )
 
-        print(
-            "PASS : CLI exposes cooldown information"
-        )
+    print(
+        "PASS : CLI exposes cooldown information"
+    )
 
-        print()
+    print()
 
-        print("=" * 60)
+    print("=" * 60)
 
-        print(
-            "CLI HEALTH TEST PASSED"
-        )
+    print(
+        "CLI HEALTH TEST PASSED"
+    )
 
-        print("=" * 60)
+    print("=" * 60)
 
 
 if __name__ == "__main__":
