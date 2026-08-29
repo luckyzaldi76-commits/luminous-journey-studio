@@ -26,6 +26,7 @@ TESTS = (
     "tests.test_ai_service_health_routing",
     "tests.test_ai_service_stream_health_routing",
     "tests.test_final_reliability",
+    "tests.test_production_config",
 )
 
 
