@@ -35,6 +35,7 @@ TESTS = (
     "tests.test_final_production_hardening",
     "tests.test_release_gate",
     "tests.test_repository_audit",
+    "tests.test_e2e_production_flow",
 )
 
 
