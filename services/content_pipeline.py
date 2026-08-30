@@ -1,8 +1,9 @@
-from pathlib import Path
+﻿from pathlib import Path
 from typing import Dict
 
 from engine.production_engine import ProductionEngine
 from services.gospel_input import GospelInputService
+from services.job_service import JobService
 
 
 class ProductionContentPipeline:
@@ -11,6 +12,7 @@ class ProductionContentPipeline:
         self,
         engine=None,
         gospel_input=None,
+        job_service=None,
     ):
 
         self.engine = (
@@ -21,6 +23,11 @@ class ProductionContentPipeline:
         self.gospel_input = (
             gospel_input
             or GospelInputService()
+        )
+
+        self.job_service = (
+            job_service
+            or JobService()
         )
 
     def generate(
@@ -58,46 +65,76 @@ class ProductionContentPipeline:
             exist_ok=True,
         )
 
-        result = self.engine.run(
-            gospel=gospel,
-            language=language,
-            audience=audience,
-            output_dir=output_dir,
-            workflow_name=workflow_name,
+        job = self.job_service.create()
+
+        self.job_service.start(
+            job.job_id
         )
 
-        if not isinstance(
-            result,
-            dict,
-        ):
+        try:
 
-            raise TypeError(
-                "Production engine must return a dict."
+            result = self.engine.run(
+                gospel=gospel,
+                language=language,
+                audience=audience,
+                output_dir=output_dir,
+                workflow_name=workflow_name,
             )
 
-        result.setdefault(
-            "gospel",
-            gospel,
-        )
+            if not isinstance(
+                result,
+                dict,
+            ):
 
-        result.setdefault(
-            "language",
-            language,
-        )
+                raise TypeError(
+                    "Production engine must return a dict."
+                )
 
-        result.setdefault(
-            "audience",
-            audience,
-        )
+            result.setdefault(
+                "gospel",
+                gospel,
+            )
 
-        result.setdefault(
-            "workflow",
-            workflow_name,
-        )
+            result.setdefault(
+                "language",
+                language,
+            )
 
-        result.setdefault(
-            "output_dir",
-            str(output_dir),
-        )
+            result.setdefault(
+                "audience",
+                audience,
+            )
 
-        return result
+            result.setdefault(
+                "workflow",
+                workflow_name,
+            )
+
+            result.setdefault(
+                "output_dir",
+                str(output_dir),
+            )
+
+            self.job_service.complete(
+                job.job_id,
+                result,
+            )
+
+            result["job_id"] = (
+                job.job_id
+            )
+
+            result["job_status"] = (
+                "completed"
+            )
+
+            return result
+
+        except Exception as error:
+
+            self.job_service.fail(
+                job.job_id,
+                str(error),
+            )
+
+            raise
