@@ -42,6 +42,7 @@ TESTS = (
     "tests.test_workflow_registry",
     "tests.test_workflow_runtime_integration",
     "tests.test_production_content_pipeline",
+    "tests.test_multilingual_pipeline",
 )
 
 
