@@ -33,7 +33,7 @@ load_dotenv(
 
 APP_NAME = "Luminous Journey Studio"
 
-VERSION = "0.5.0"
+VERSION = "0.6.0"
 
 
 # ==========================================================
