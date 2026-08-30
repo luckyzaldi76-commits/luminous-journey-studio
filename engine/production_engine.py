@@ -4,10 +4,14 @@ from luminous.context.pipeline_context import PipelineContext
 from luminous.kernel.event_bus import EventBus
 from luminous.kernel.runtime import Runtime
 from luminous.kernel.scheduler import Scheduler
-from luminous.workflows.dailygospelworkflow import DailyGospelWorkflow
 
 from services.builder_service import BuilderService
-from luminous.infrastructure.exporters.exporter_service import ExporterService
+from luminous.infrastructure.exporters.exporter_service import (
+    ExporterService,
+)
+from services.workflow_registry import (
+    workflow_registry,
+)
 
 
 class ProductionEngine:
@@ -15,6 +19,7 @@ class ProductionEngine:
     def __init__(self):
 
         self.builder = BuilderService()
+
         self.exporter = ExporterService()
 
         self.runtime = Runtime(
@@ -37,7 +42,9 @@ class ProductionEngine:
             audience=audience,
         )
 
-        workflow = DailyGospelWorkflow()
+        workflow = workflow_registry.create(
+            workflow_name,
+        )
 
         self.runtime.run(
             workflow,

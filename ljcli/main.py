@@ -7,7 +7,11 @@ from config.settings import (
     USE_MOCK,
     VERSION,
 )
+
 from services.provider_health import provider_health
+from services.workflow_registry import (
+    workflow_registry,
+)
 
 
 def _print_header():
@@ -95,6 +99,22 @@ def _print_health():
     return 0
 
 
+def _print_workflows():
+
+    print()
+    print("=" * 60)
+    print("AVAILABLE WORKFLOWS")
+    print("=" * 60)
+
+    for name in workflow_registry.names():
+
+        print(name)
+
+    print("=" * 60)
+
+    return 0
+
+
 def build_parser():
 
     parser = argparse.ArgumentParser(
@@ -111,6 +131,11 @@ def build_parser():
     subparsers.add_parser(
         "health",
         help="Show provider health",
+    )
+
+    subparsers.add_parser(
+        "workflows",
+        help="List available workflows",
     )
 
     return parser
@@ -131,6 +156,10 @@ def main(
     if args.command == "health":
 
         return _print_health()
+
+    if args.command == "workflows":
+
+        return _print_workflows()
 
     return 0
 

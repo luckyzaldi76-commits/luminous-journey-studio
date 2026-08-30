@@ -39,6 +39,8 @@ TESTS = (
     "tests.test_full_pipeline_e2e",
     "tests.test_full_system_validation",
     "tests.test_final_release",
+    "tests.test_workflow_registry",
+    "tests.test_workflow_runtime_integration",
 )
 
 
