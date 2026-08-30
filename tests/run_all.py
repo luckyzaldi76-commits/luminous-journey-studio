@@ -38,6 +38,7 @@ TESTS = (
     "tests.test_e2e_production_flow",
     "tests.test_full_pipeline_e2e",
     "tests.test_full_system_validation",
+    "tests.test_final_release",
 )
 
 
@@ -56,12 +57,20 @@ def run(test: str):
     )
 
     if result.returncode != 0:
+
         print()
-        print(f"FAILED : {test}")
-        sys.exit(result.returncode)
+        print(
+            f"FAILED : {test}"
+        )
+
+        sys.exit(
+            result.returncode
+        )
 
     print()
-    print(f"PASSED : {test}")
+    print(
+        f"PASSED : {test}"
+    )
     print()
 
 
@@ -76,15 +85,20 @@ def main():
     passed = 0
 
     for test in TESTS:
+
         run(test)
+
         passed += 1
 
     print("=" * 60)
     print("ALL TESTS PASSED")
     print("=" * 60)
-    print(f"Executed : {passed}")
+    print(
+        f"Executed : {passed}"
+    )
     print()
 
 
 if __name__ == "__main__":
+
     main()
