@@ -44,6 +44,7 @@ TESTS = (
     "tests.test_production_content_pipeline",
     "tests.test_multilingual_pipeline",
     "tests.test_asset_pipeline",
+    "tests.test_cli_production_generation",
 )
 
 

@@ -1,4 +1,5 @@
-import argparse
+﻿import argparse
+from pathlib import Path
 
 from config.settings import (
     AI_PROVIDER,
@@ -9,9 +10,8 @@ from config.settings import (
 )
 
 from services.provider_health import provider_health
-from services.workflow_registry import (
-    workflow_registry,
-)
+from services.workflow_registry import workflow_registry
+from services.content_pipeline import ProductionContentPipeline
 
 
 def _print_header():
@@ -20,25 +20,11 @@ def _print_header():
     print("LUMINOUS JOURNEY STUDIO")
     print("=" * 60)
 
-    print(
-        f"Version        : {VERSION}"
-    )
-
-    print(
-        f"AI Provider    : {AI_PROVIDER}"
-    )
-
-    print(
-        f"Mock           : {USE_MOCK}"
-    )
-
-    print(
-        f"Gemini Model   : {GEMINI_MODEL}"
-    )
-
-    print(
-        f"OpenRouter     : {OPENROUTER_MODEL}"
-    )
+    print(f"Version        : {VERSION}")
+    print(f"AI Provider    : {AI_PROVIDER}")
+    print(f"Mock           : {USE_MOCK}")
+    print(f"Gemini Model   : {GEMINI_MODEL}")
+    print(f"OpenRouter     : {OPENROUTER_MODEL}")
 
     print("=" * 60)
 
@@ -54,31 +40,17 @@ def _print_health():
 
     if not snapshot:
 
-        print(
-            "No provider health state."
-        )
-
+        print("No provider health state.")
         print("=" * 60)
 
         return 0
 
     for name, health in snapshot.items():
 
-        print(
-            f"Provider       : {name}"
-        )
-
-        print(
-            f"Status         : {health['status']}"
-        )
-
-        print(
-            f"Failures       : {health['failures']}"
-        )
-
-        print(
-            f"Available      : {health['available']}"
-        )
+        print(f"Provider       : {name}")
+        print(f"Status         : {health['status']}")
+        print(f"Failures       : {health['failures']}")
+        print(f"Available      : {health['available']}")
 
         print(
             "Remaining      : "
@@ -115,13 +87,41 @@ def _print_workflows():
     return 0
 
 
+def _generate(args):
+
+    output_dir = Path(args.output_dir)
+
+    pipeline = ProductionContentPipeline()
+
+    result = pipeline.generate(
+        gospel=args.gospel,
+        language=args.language,
+        audience=args.audience,
+        output_dir=output_dir,
+        workflow_name=args.workflow,
+    )
+
+    print()
+    print("=" * 60)
+    print("PRODUCTION GENERATION COMPLETE")
+    print("=" * 60)
+
+    print(f"Gospel         : {result['gospel']}")
+    print(f"Language       : {result['language']}")
+    print(f"Audience       : {result['audience']}")
+    print(f"Workflow       : {result['workflow']}")
+    print(f"Output         : {result['output_dir']}")
+
+    print("=" * 60)
+
+    return 0
+
+
 def build_parser():
 
     parser = argparse.ArgumentParser(
         prog="ljcli",
-        description=(
-            "Luminous Journey Studio CLI"
-        ),
+        description="Luminous Journey Studio CLI",
     )
 
     subparsers = parser.add_subparsers(
@@ -138,18 +138,49 @@ def build_parser():
         help="List available workflows",
     )
 
+    generate_parser = subparsers.add_parser(
+        "generate",
+        help="Generate production content",
+    )
+
+    generate_parser.add_argument(
+        "--gospel",
+        required=True,
+        help="Gospel passage",
+    )
+
+    generate_parser.add_argument(
+        "--language",
+        required=True,
+        help="Language code",
+    )
+
+    generate_parser.add_argument(
+        "--audience",
+        required=True,
+        help="Target audience",
+    )
+
+    generate_parser.add_argument(
+        "--output-dir",
+        required=True,
+        help="Production output directory",
+    )
+
+    generate_parser.add_argument(
+        "--workflow",
+        default="Daily Gospel",
+        help="Workflow name",
+    )
+
     return parser
 
 
-def main(
-    argv=None,
-):
+def main(argv=None):
 
     parser = build_parser()
 
-    args = parser.parse_args(
-        argv,
-    )
+    args = parser.parse_args(argv)
 
     _print_header()
 
@@ -161,11 +192,13 @@ def main(
 
         return _print_workflows()
 
+    if args.command == "generate":
+
+        return _generate(args)
+
     return 0
 
 
 if __name__ == "__main__":
 
-    raise SystemExit(
-        main()
-    )
+    raise SystemExit(main())
