@@ -50,6 +50,7 @@ TESTS = (
     "tests.test_job_queue",
     "tests.test_job_store",
     "tests.test_job_recovery",
+    "tests.test_multilingual_job_pipeline",
 )
 
 
