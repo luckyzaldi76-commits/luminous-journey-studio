@@ -47,6 +47,7 @@ TESTS = (
     "tests.test_cli_production_generation",
     "tests.test_gospel_input",
     "tests.test_job_service",
+    "tests.test_job_queue",
 )
 
 
@@ -108,5 +109,4 @@ def main():
 
 
 if __name__ == "__main__":
-
     main()
