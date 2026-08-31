@@ -3,6 +3,8 @@ from datetime import datetime, timezone
 from typing import Dict, Optional
 from uuid import uuid4
 
+from services.job_store import PersistentJobStore
+
 
 @dataclass
 class ProductionJob:
@@ -25,12 +27,29 @@ class JobService:
         "failed",
     }
 
-    def __init__(self):
+    def __init__(
+        self,
+        store=None,
+    ):
+
+        self.store = store
 
         self._jobs: Dict[
             str,
             ProductionJob,
         ] = {}
+
+        if self.store is not None:
+
+            for data in self.store.all():
+
+                job = ProductionJob(
+                    **data
+                )
+
+                self._jobs[
+                    job.job_id
+                ] = job
 
     @staticmethod
     def _now() -> str:
@@ -41,6 +60,17 @@ class JobService:
             ).isoformat()
         )
 
+    def _persist(
+        self,
+        job: ProductionJob,
+    ):
+
+        if self.store is not None:
+
+            self.store.save(
+                job
+            )
+
     def create(self) -> ProductionJob:
 
         job = ProductionJob(
@@ -49,7 +79,13 @@ class JobService:
             created_at=self._now(),
         )
 
-        self._jobs[job.job_id] = job
+        self._jobs[
+            job.job_id
+        ] = job
+
+        self._persist(
+            job
+        )
 
         return job
 
@@ -58,7 +94,9 @@ class JobService:
         job_id: str,
     ) -> ProductionJob:
 
-        job = self.get(job_id)
+        job = self.get(
+            job_id
+        )
 
         self._require_status(
             job,
@@ -68,6 +106,10 @@ class JobService:
         job.status = "running"
         job.started_at = self._now()
 
+        self._persist(
+            job
+        )
+
         return job
 
     def complete(
@@ -76,7 +118,9 @@ class JobService:
         result: Optional[dict] = None,
     ) -> ProductionJob:
 
-        job = self.get(job_id)
+        job = self.get(
+            job_id
+        )
 
         self._require_status(
             job,
@@ -87,6 +131,10 @@ class JobService:
         job.completed_at = self._now()
         job.result = result
 
+        self._persist(
+            job
+        )
+
         return job
 
     def fail(
@@ -95,7 +143,9 @@ class JobService:
         error: str,
     ) -> ProductionJob:
 
-        job = self.get(job_id)
+        job = self.get(
+            job_id
+        )
 
         self._require_status(
             job,
@@ -106,6 +156,10 @@ class JobService:
         job.completed_at = self._now()
         job.error = str(error)
 
+        self._persist(
+            job
+        )
+
         return job
 
     def get(
@@ -113,20 +167,50 @@ class JobService:
         job_id: str,
     ) -> ProductionJob:
 
-        if job_id not in self._jobs:
+        if job_id in self._jobs:
 
-            raise KeyError(
-                f"Unknown job: {job_id}"
+            return self._jobs[
+                job_id
+            ]
+
+        if self.store is not None:
+
+            data = self.store.get(
+                job_id
             )
 
-        return self._jobs[job_id]
+            if data is not None:
+
+                job = ProductionJob(
+                    **data
+                )
+
+                self._jobs[
+                    job.job_id
+                ] = job
+
+                return job
+
+        raise KeyError(
+            f"Unknown job: {job_id}"
+        )
 
     def exists(
         self,
         job_id: str,
     ) -> bool:
 
-        return job_id in self._jobs
+        if job_id in self._jobs:
+
+            return True
+
+        if self.store is not None:
+
+            return self.store.exists(
+                job_id
+            )
+
+        return False
 
     def snapshot(
         self,
@@ -134,7 +218,9 @@ class JobService:
     ) -> dict:
 
         return asdict(
-            self.get(job_id)
+            self.get(
+                job_id
+            )
         )
 
     @classmethod

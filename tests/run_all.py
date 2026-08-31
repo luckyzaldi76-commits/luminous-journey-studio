@@ -48,6 +48,7 @@ TESTS = (
     "tests.test_gospel_input",
     "tests.test_job_service",
     "tests.test_job_queue",
+    "tests.test_job_store",
 )
 
 
