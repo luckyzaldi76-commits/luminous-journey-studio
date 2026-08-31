@@ -1,5 +1,5 @@
 ﻿from pathlib import Path
-from typing import Iterable, Optional
+from typing import Iterable
 
 from services.asset_pipeline import AssetPipeline
 from services.gospel_input import GospelInput
@@ -20,10 +20,7 @@ class ProductionOrchestrator:
         asset_pipeline=None,
     ):
 
-        self.gospel_input = (
-            gospel_input
-            or GospelInput()
-        )
+        self.gospel_input = gospel_input
 
         self.multilingual_pipeline = (
             multilingual_pipeline
@@ -40,6 +37,67 @@ class ProductionOrchestrator:
             or AssetPipeline()
         )
 
+    @staticmethod
+    def _normalize_gospel(
+        gospel: str,
+    ) -> str:
+
+        if not isinstance(
+            gospel,
+            str,
+        ):
+
+            raise TypeError(
+                "Gospel must be a string."
+            )
+
+        gospel = gospel.strip()
+
+        if not gospel:
+
+            raise ValueError(
+                "Gospel cannot be empty."
+            )
+
+        return gospel
+
+    def _prepare_gospel(
+        self,
+        gospel: str,
+    ) -> str:
+
+        if self.gospel_input is None:
+
+            return self._normalize_gospel(
+                gospel
+            )
+
+        normalized = (
+            self.gospel_input.normalize(
+                gospel
+            )
+        )
+
+        if not isinstance(
+            normalized,
+            str,
+        ):
+
+            raise TypeError(
+                "GospelInput.normalize() "
+                "must return a string."
+            )
+
+        normalized = normalized.strip()
+
+        if not normalized:
+
+            raise ValueError(
+                "Gospel cannot be empty."
+            )
+
+        return normalized
+
     def prepare(
         self,
         gospel: str,
@@ -50,7 +108,7 @@ class ProductionOrchestrator:
     ) -> list[ProductionJob]:
 
         normalized_gospel = (
-            self.gospel_input.normalize(
+            self._prepare_gospel(
                 gospel
             )
         )
@@ -101,7 +159,7 @@ class ProductionOrchestrator:
     ) -> dict:
 
         normalized_gospel = (
-            self.gospel_input.normalize(
+            self._prepare_gospel(
                 gospel
             )
         )
@@ -139,8 +197,14 @@ class ProductionOrchestrator:
                 output_dir / language
             )
 
+            language_dir.mkdir(
+                parents=True,
+                exist_ok=True,
+            )
+
             result = (
-                self.multilingual_pipeline.pipeline
+                self.multilingual_pipeline
+                .pipeline
                 .generate(
                     gospel=normalized_gospel,
                     language=language,
@@ -150,10 +214,10 @@ class ProductionOrchestrator:
                 )
             )
 
-            asset_result = (
+            exported = (
                 self.asset_pipeline.export(
-                    result,
                     language_dir,
+                    output_dir,
                 )
             )
 
@@ -161,7 +225,13 @@ class ProductionOrchestrator:
                 "job_id": job.job_id,
                 "language": language,
                 "content": result,
-                "assets": asset_result,
+                "assets": exported,
+                "source_dir": str(
+                    language_dir
+                ),
+                "output_dir": str(
+                    output_dir
+                ),
             }
 
         while not self.job_queue.empty():

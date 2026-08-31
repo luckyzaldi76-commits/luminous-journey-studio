@@ -52,6 +52,7 @@ TESTS = (
     "tests.test_job_recovery",
     "tests.test_multilingual_job_pipeline",
     "tests.test_production_orchestrator",
+    "tests.test_cli_batch_generation",
 )
 
 
