@@ -9,9 +9,15 @@ from config.settings import (
     VERSION,
 )
 
-from services.provider_health import provider_health
-from services.workflow_registry import workflow_registry
-from services.content_pipeline import ProductionContentPipeline
+from services.production_orchestrator import (
+    ProductionOrchestrator,
+)
+from services.provider_health import (
+    provider_health,
+)
+from services.workflow_registry import (
+    workflow_registry,
+)
 
 
 def _print_header():
@@ -20,11 +26,25 @@ def _print_header():
     print("LUMINOUS JOURNEY STUDIO")
     print("=" * 60)
 
-    print(f"Version        : {VERSION}")
-    print(f"AI Provider    : {AI_PROVIDER}")
-    print(f"Mock           : {USE_MOCK}")
-    print(f"Gemini Model   : {GEMINI_MODEL}")
-    print(f"OpenRouter     : {OPENROUTER_MODEL}")
+    print(
+        f"Version        : {VERSION}"
+    )
+
+    print(
+        f"AI Provider    : {AI_PROVIDER}"
+    )
+
+    print(
+        f"Mock           : {USE_MOCK}"
+    )
+
+    print(
+        f"Gemini Model   : {GEMINI_MODEL}"
+    )
+
+    print(
+        f"OpenRouter     : {OPENROUTER_MODEL}"
+    )
 
     print("=" * 60)
 
@@ -40,17 +60,31 @@ def _print_health():
 
     if not snapshot:
 
-        print("No provider health state.")
+        print(
+            "No provider health state."
+        )
+
         print("=" * 60)
 
         return 0
 
     for name, health in snapshot.items():
 
-        print(f"Provider       : {name}")
-        print(f"Status         : {health['status']}")
-        print(f"Failures       : {health['failures']}")
-        print(f"Available      : {health['available']}")
+        print(
+            f"Provider       : {name}"
+        )
+
+        print(
+            f"Status         : {health['status']}"
+        )
+
+        print(
+            f"Failures       : {health['failures']}"
+        )
+
+        print(
+            f"Available      : {health['available']}"
+        )
 
         print(
             "Remaining      : "
@@ -89,13 +123,15 @@ def _print_workflows():
 
 def _generate(args):
 
-    output_dir = Path(args.output_dir)
+    output_dir = Path(
+        args.output_dir
+    )
 
-    pipeline = ProductionContentPipeline()
+    pipeline = ProductionOrchestrator()
 
-    result = pipeline.generate(
+    result = pipeline.run(
         gospel=args.gospel,
-        language=args.language,
+        languages=(args.language,),
         audience=args.audience,
         output_dir=output_dir,
         workflow_name=args.workflow,
@@ -106,22 +142,132 @@ def _generate(args):
     print("PRODUCTION GENERATION COMPLETE")
     print("=" * 60)
 
-    print(f"Gospel         : {result['gospel']}")
-    print(f"Language       : {result['language']}")
-    print(f"Audience       : {result['audience']}")
-    print(f"Workflow       : {result['workflow']}")
-    print(f"Output         : {result['output_dir']}")
+    print(
+        f"Gospel         : {result['gospel']}"
+    )
+
+    print(
+        f"Language       : "
+        f"{result['languages'][0]}"
+    )
+
+    print(
+        f"Audience       : {result['audience']}"
+    )
+
+    print(
+        f"Workflow       : {result['workflow']}"
+    )
+
+    print(
+        f"Jobs           : {result['total_jobs']}"
+    )
+
+    print(
+        f"Completed      : "
+        f"{result['completed_jobs']}"
+    )
+
+    print(
+        f"Failed         : "
+        f"{result['failed_jobs']}"
+    )
+
+    print(
+        f"Output         : {result['output_dir']}"
+    )
+
+    print(
+        f"Success        : {result['success']}"
+    )
 
     print("=" * 60)
 
-    return 0
+    return 0 if result["success"] else 1
+
+
+def _batch(args):
+
+    languages = tuple(
+        language.strip().upper()
+        for language in args.languages.split(",")
+        if language.strip()
+    )
+
+    if not languages:
+
+        raise ValueError(
+            "At least one language is required."
+        )
+
+    output_dir = Path(
+        args.output_dir
+    )
+
+    pipeline = ProductionOrchestrator()
+
+    result = pipeline.run(
+        gospel=args.gospel,
+        languages=languages,
+        audience=args.audience,
+        output_dir=output_dir,
+        workflow_name=args.workflow,
+    )
+
+    print()
+    print("=" * 60)
+    print("PRODUCTION BATCH COMPLETE")
+    print("=" * 60)
+
+    print(
+        f"Gospel         : {result['gospel']}"
+    )
+
+    print(
+        f"Languages      : "
+        f"{', '.join(result['languages'])}"
+    )
+
+    print(
+        f"Audience       : {result['audience']}"
+    )
+
+    print(
+        f"Workflow       : {result['workflow']}"
+    )
+
+    print(
+        f"Total Jobs     : {result['total_jobs']}"
+    )
+
+    print(
+        f"Completed      : {result['completed_jobs']}"
+    )
+
+    print(
+        f"Failed         : {result['failed_jobs']}"
+    )
+
+    print(
+        f"Output         : {result['output_dir']}"
+    )
+
+    print(
+        f"Success        : {result['success']}"
+    )
+
+    print("=" * 60)
+
+    return 0 if result["success"] else 1
 
 
 def build_parser():
 
     parser = argparse.ArgumentParser(
         prog="ljcli",
-        description="Luminous Journey Studio CLI",
+        description=(
+            "Luminous Journey Studio CLI"
+        ),
     )
 
     subparsers = parser.add_subparsers(
@@ -173,6 +319,43 @@ def build_parser():
         help="Workflow name",
     )
 
+    batch_parser = subparsers.add_parser(
+        "batch",
+        help="Generate multilingual production batch",
+    )
+
+    batch_parser.add_argument(
+        "--gospel",
+        required=True,
+        help="Gospel passage",
+    )
+
+    batch_parser.add_argument(
+        "--languages",
+        required=True,
+        help=(
+            "Comma-separated language codes"
+        ),
+    )
+
+    batch_parser.add_argument(
+        "--audience",
+        required=True,
+        help="Target audience",
+    )
+
+    batch_parser.add_argument(
+        "--output-dir",
+        required=True,
+        help="Production output directory",
+    )
+
+    batch_parser.add_argument(
+        "--workflow",
+        default="Daily Gospel",
+        help="Workflow name",
+    )
+
     return parser
 
 
@@ -180,7 +363,9 @@ def main(argv=None):
 
     parser = build_parser()
 
-    args = parser.parse_args(argv)
+    args = parser.parse_args(
+        argv
+    )
 
     _print_header()
 
@@ -196,9 +381,15 @@ def main(argv=None):
 
         return _generate(args)
 
+    if args.command == "batch":
+
+        return _batch(args)
+
     return 0
 
 
 if __name__ == "__main__":
 
-    raise SystemExit(main())
+    raise SystemExit(
+        main()
+    )
