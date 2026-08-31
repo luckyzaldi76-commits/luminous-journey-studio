@@ -49,6 +49,7 @@ TESTS = (
     "tests.test_job_service",
     "tests.test_job_queue",
     "tests.test_job_store",
+    "tests.test_job_recovery",
 )
 
 
