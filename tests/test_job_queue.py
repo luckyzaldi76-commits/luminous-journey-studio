@@ -111,6 +111,142 @@ def main():
 
     assert failure_queue.empty()
 
+    retry_queue = ProductionJobQueue()
+
+    retry_job = retry_queue.create()
+
+    attempts = []
+
+    def retry_executor(job):
+
+        attempts.append(
+            len(attempts) + 1
+        )
+
+        if len(attempts) < 3:
+
+            raise RuntimeError(
+                "503 temporary provider error"
+            )
+
+        return {
+            "job_id": job.job_id,
+            "attempts": len(attempts),
+            "success": True,
+        }
+
+    retried = retry_queue.run_next(
+        retry_executor,
+        retries=3,
+        delays=(0, 0, 0),
+    )
+
+    assert retried.job_id == (
+        retry_job.job_id
+    )
+
+    assert retried.status == (
+        "completed"
+    )
+
+    assert attempts == [
+        1,
+        2,
+        3,
+    ]
+
+    assert retried.result == {
+        "job_id": retry_job.job_id,
+        "attempts": 3,
+        "success": True,
+    }
+
+    permanent_queue = ProductionJobQueue()
+
+    permanent_job = (
+        permanent_queue.create()
+    )
+
+    permanent_attempts = []
+
+    def permanent_executor(job):
+
+        permanent_attempts.append(
+            len(permanent_attempts) + 1
+        )
+
+        raise RuntimeError(
+            "401 Unauthorized"
+        )
+
+    permanent = permanent_queue.run_next(
+        permanent_executor,
+        retries=3,
+        delays=(0, 0, 0),
+    )
+
+    assert permanent.job_id == (
+        permanent_job.job_id
+    )
+
+    assert permanent.status == (
+        "failed"
+    )
+
+    assert permanent.error == (
+        "401 Unauthorized"
+    )
+
+    assert permanent_attempts == [
+        1,
+    ]
+
+    assert permanent_queue.empty()
+
+    exhausted_queue = ProductionJobQueue()
+
+    exhausted_job = (
+        exhausted_queue.create()
+    )
+
+    exhausted_attempts = []
+
+    def exhausted_executor(job):
+
+        exhausted_attempts.append(
+            len(exhausted_attempts) + 1
+        )
+
+        raise RuntimeError(
+            "503 Service Unavailable"
+        )
+
+    exhausted = exhausted_queue.run_next(
+        exhausted_executor,
+        retries=3,
+        delays=(0, 0, 0),
+    )
+
+    assert exhausted.job_id == (
+        exhausted_job.job_id
+    )
+
+    assert exhausted.status == (
+        "failed"
+    )
+
+    assert exhausted.error == (
+        "503 Service Unavailable"
+    )
+
+    assert exhausted_attempts == [
+        1,
+        2,
+        3,
+    ]
+
+    assert exhausted_queue.empty()
+
     print("=" * 60)
     print("JOB QUEUE TEST PASSED")
     print("=" * 60)

@@ -5,6 +5,9 @@ from services.job_service import (
     JobService,
     ProductionJob,
 )
+from services.retry_service import (
+    RetryService,
+)
 
 
 class ProductionJobQueue:
@@ -12,11 +15,17 @@ class ProductionJobQueue:
     def __init__(
         self,
         job_service=None,
+        retry_service=None,
     ):
 
         self.job_service = (
             job_service
             or JobService()
+        )
+
+        self.retry_service = (
+            retry_service
+            or RetryService
         )
 
         self._queue = deque()
@@ -96,7 +105,9 @@ class ProductionJobQueue:
                 "Production job queue is empty."
             )
 
-        job_id = self._queue.popleft()
+        job_id = (
+            self._queue.popleft()
+        )
 
         return self.job_service.get(
             job_id
@@ -108,6 +119,8 @@ class ProductionJobQueue:
             [ProductionJob],
             dict,
         ],
+        retries: int | None = None,
+        delays: tuple | None = None,
     ) -> ProductionJob:
 
         job = self.dequeue()
@@ -118,29 +131,27 @@ class ProductionJobQueue:
 
         try:
 
-            result = executor(
-                job
+            result = self.retry_service.execute(
+                lambda: executor(job),
+                retries=retries,
+                delays=delays,
             )
 
-            return self.job_service.complete(
+            self.job_service.complete(
                 job.job_id,
                 result,
             )
 
         except Exception as error:
 
-            failed = self.job_service.fail(
+            self.job_service.fail(
                 job.job_id,
                 str(error),
             )
 
-            # Preserve the failed job as the
-            # return value so callers can inspect
-            # the job without accessing private
-            # JobService state.
-            failed._queue_error = error
-
-            return failed
+        return self.job_service.get(
+            job.job_id
+        )
 
     def run_all(
         self,
@@ -148,6 +159,8 @@ class ProductionJobQueue:
             [ProductionJob],
             dict,
         ],
+        retries: int | None = None,
+        delays: tuple | None = None,
     ) -> list[ProductionJob]:
 
         results = []
@@ -156,7 +169,9 @@ class ProductionJobQueue:
 
             results.append(
                 self.run_next(
-                    executor
+                    executor,
+                    retries=retries,
+                    delays=delays,
                 )
             )
 
