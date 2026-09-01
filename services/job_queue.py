@@ -30,6 +30,8 @@ class ProductionJobQueue:
 
         self._queue = deque()
 
+        self._job_ids = []
+
     def enqueue(
         self,
         job_id: str,
@@ -54,6 +56,12 @@ class ProductionJobQueue:
         self._queue.append(
             job_id
         )
+
+        if job_id not in self._job_ids:
+
+            self._job_ids.append(
+                job_id
+            )
 
         return job
 
@@ -112,6 +120,63 @@ class ProductionJobQueue:
         return self.job_service.get(
             job_id
         )
+
+    def snapshot(
+        self,
+    ) -> dict:
+
+        jobs = []
+
+        for job_id in self._job_ids:
+
+            jobs.append(
+                self.job_service.get(
+                    job_id
+                )
+            )
+
+        queued = sum(
+            job.status == "queued"
+            for job in jobs
+        )
+
+        running = sum(
+            job.status == "running"
+            for job in jobs
+        )
+
+        completed = sum(
+            job.status == "completed"
+            for job in jobs
+        )
+
+        failed = sum(
+            job.status == "failed"
+            for job in jobs
+        )
+
+        total = len(
+            jobs
+        )
+
+        remaining = (
+            queued + running
+        )
+
+        return {
+            "total": total,
+            "queued": queued,
+            "running": running,
+            "completed": completed,
+            "failed": failed,
+            "remaining": remaining,
+            "success": (
+                total > 0
+                and remaining == 0
+                and failed == 0
+                and completed == total
+            ),
+        }
 
     def run_next(
         self,

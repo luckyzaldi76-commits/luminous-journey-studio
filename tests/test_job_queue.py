@@ -94,7 +94,9 @@ def main():
                     "queue failure"
                 )
             )
-        )
+        ),
+        retries=1,
+        delays=(0,),
     )
 
     assert failed.job_id == (
@@ -149,6 +151,12 @@ def main():
         "completed"
     )
 
+    assert retried.attempts == 3
+
+    assert retried.last_error == (
+        "503 temporary provider error"
+    )
+
     assert attempts == [
         1,
         2,
@@ -197,6 +205,12 @@ def main():
         "401 Unauthorized"
     )
 
+    assert permanent.last_error == (
+        "401 Unauthorized"
+    )
+
+    assert permanent.attempts == 1
+
     assert permanent_attempts == [
         1,
     ]
@@ -239,6 +253,12 @@ def main():
         "503 Service Unavailable"
     )
 
+    assert exhausted.last_error == (
+        "503 Service Unavailable"
+    )
+
+    assert exhausted.attempts == 3
+
     assert exhausted_attempts == [
         1,
         2,
@@ -246,6 +266,111 @@ def main():
     ]
 
     assert exhausted_queue.empty()
+
+    progress_queue = ProductionJobQueue()
+
+    progress_jobs = [
+        progress_queue.create()
+        for _ in range(3)
+    ]
+
+    progress = (
+        progress_queue.snapshot()
+    )
+
+    assert progress["total"] == 3
+    assert progress["queued"] == 3
+    assert progress["running"] == 0
+    assert progress["completed"] == 0
+    assert progress["failed"] == 0
+
+    assert progress["remaining"] == 3
+    assert progress["success"] is False
+
+    progress_queue.run_next(
+        lambda job: {
+            "success": True,
+        }
+    )
+
+    progress = (
+        progress_queue.snapshot()
+    )
+
+    assert progress["total"] == 3
+    assert progress["queued"] == 2
+    assert progress["running"] == 0
+    assert progress["completed"] == 1
+    assert progress["failed"] == 0
+
+    assert progress["remaining"] == 2
+    assert progress["success"] is False
+
+    progress_queue.run_all(
+        lambda job: {
+            "success": True,
+        }
+    )
+
+    progress = (
+        progress_queue.snapshot()
+    )
+
+    assert progress["total"] == 3
+    assert progress["queued"] == 0
+    assert progress["running"] == 0
+    assert progress["completed"] == 3
+    assert progress["failed"] == 0
+
+    assert progress["remaining"] == 0
+    assert progress["success"] is True
+
+    partial_queue = ProductionJobQueue()
+
+    partial_queue.create()
+    partial_queue.create()
+    partial_queue.create()
+
+    first_partial = partial_queue.run_next(
+        lambda job: {
+            "success": True,
+        }
+    )
+
+    assert first_partial.status == (
+        "completed"
+    )
+
+    second_partial = (
+        partial_queue.run_next(
+            lambda job: (
+                (_ for _ in ()).throw(
+                    RuntimeError(
+                        "partial failure"
+                    )
+                )
+            ),
+            retries=1,
+            delays=(0,),
+        )
+    )
+
+    assert second_partial.status == (
+        "failed"
+    )
+
+    progress = (
+        partial_queue.snapshot()
+    )
+
+    assert progress["total"] == 3
+    assert progress["queued"] == 1
+    assert progress["running"] == 0
+    assert progress["completed"] == 1
+    assert progress["failed"] == 1
+
+    assert progress["remaining"] == 1
+    assert progress["success"] is False
 
     print("=" * 60)
     print("JOB QUEUE TEST PASSED")
