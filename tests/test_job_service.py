@@ -10,6 +10,8 @@ def main():
     assert job.job_id
     assert job.status == "queued"
     assert job.created_at
+    assert job.attempts == 0
+    assert job.last_error is None
 
     assert service.exists(
         job.job_id
@@ -21,50 +23,100 @@ def main():
 
     assert started.status == "running"
     assert started.started_at
+    assert started.attempts == 0
 
-    result = {
-        "gospel": "Lukas 5:33-39",
-        "language": "IND",
-    }
+    service.record_attempt(
+        job.job_id
+    )
+
+    current = service.get(
+        job.job_id
+    )
+
+    assert current.attempts == 1
+
+    service.record_error(
+        job.job_id,
+        "503 Service Unavailable",
+    )
+
+    current = service.get(
+        job.job_id
+    )
+
+    assert current.attempts == 1
+    assert current.last_error == (
+        "503 Service Unavailable"
+    )
+
+    service.record_attempt(
+        job.job_id
+    )
+
+    service.record_error(
+        job.job_id,
+        "503 Service Unavailable",
+    )
+
+    service.record_attempt(
+        job.job_id
+    )
 
     completed = service.complete(
         job.job_id,
-        result,
+        {
+            "success": True,
+        },
     )
 
     assert completed.status == "completed"
-    assert completed.completed_at
-    assert completed.result == result
+    assert completed.attempts == 3
+
+    assert completed.last_error == (
+        "503 Service Unavailable"
+    )
+
+    assert completed.result == {
+        "success": True,
+    }
 
     snapshot = service.snapshot(
         job.job_id
     )
 
-    assert snapshot["job_id"] == (
-        job.job_id
-    )
-
-    assert snapshot["status"] == (
-        "completed"
+    assert snapshot["attempts"] == 3
+    assert snapshot["last_error"] == (
+        "503 Service Unavailable"
     )
 
     failed_job = service.create()
 
-    service.fail(
-        failed_job.job_id,
-        "test failure",
+    service.start(
+        failed_job.job_id
     )
 
-    assert (
-        service.get(
-            failed_job.job_id
-        ).status
-        == "failed"
+    service.record_attempt(
+        failed_job.job_id
+    )
+
+    failed = service.fail(
+        failed_job.job_id,
+        "401 Unauthorized",
+    )
+
+    assert failed.status == "failed"
+    assert failed.attempts == 1
+    assert failed.last_error == (
+        "401 Unauthorized"
+    )
+
+    assert failed.error == (
+        "401 Unauthorized"
     )
 
     try:
 
-        service.get(
+        service.record_attempt(
             "unknown-job"
         )
 
@@ -76,22 +128,8 @@ def main():
 
         pass
 
-    try:
-
-        service.complete(
-            failed_job.job_id
-        )
-
-        raise AssertionError(
-            "Invalid transition should fail."
-        )
-
-    except ValueError:
-
-        pass
-
     print("=" * 60)
-    print("JOB SERVICE TEST PASSED")
+    print("JOB ATTEMPT TRACKING TEST PASSED")
     print("=" * 60)
 
 

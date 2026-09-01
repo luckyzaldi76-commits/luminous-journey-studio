@@ -129,12 +129,35 @@ class ProductionJobQueue:
             job.job_id
         )
 
+        def execute_attempt():
+
+            self.job_service.record_attempt(
+                job.job_id
+            )
+
+            try:
+
+                return executor(
+                    job
+                )
+
+            except Exception as error:
+
+                self.job_service.record_error(
+                    job.job_id,
+                    str(error),
+                )
+
+                raise
+
         try:
 
-            result = self.retry_service.execute(
-                lambda: executor(job),
-                retries=retries,
-                delays=delays,
+            result = (
+                self.retry_service.execute(
+                    execute_attempt,
+                    retries=retries,
+                    delays=delays,
+                )
             )
 
             self.job_service.complete(

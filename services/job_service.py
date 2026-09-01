@@ -16,6 +16,8 @@ class ProductionJob:
     completed_at: Optional[str] = None
     error: Optional[str] = None
     result: Optional[dict] = None
+    attempts: int = 0
+    last_error: Optional[str] = None
 
 
 class JobService:
@@ -112,6 +114,48 @@ class JobService:
 
         return job
 
+    def record_attempt(
+        self,
+        job_id: str,
+    ) -> ProductionJob:
+
+        job = self.get(
+            job_id
+        )
+
+        self._require_status(
+            job,
+            {"running"},
+        )
+
+        job.attempts += 1
+
+        self._persist(
+            job
+        )
+
+        return job
+
+    def record_error(
+        self,
+        job_id: str,
+        error: str,
+    ) -> ProductionJob:
+
+        job = self.get(
+            job_id
+        )
+
+        job.last_error = str(
+            error
+        )
+
+        self._persist(
+            job
+        )
+
+        return job
+
     def complete(
         self,
         job_id: str,
@@ -155,6 +199,7 @@ class JobService:
         job.status = "failed"
         job.completed_at = self._now()
         job.error = str(error)
+        job.last_error = str(error)
 
         self._persist(
             job
