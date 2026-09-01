@@ -388,6 +388,45 @@ def test_partial_failure_continues_batch():
         ).exists()
 
 
+
+def test_progress_is_returned():
+
+    with tempfile.TemporaryDirectory() as temp:
+
+        output_dir = Path(temp)
+
+        orchestrator = ProductionOrchestrator(
+            gospel_input=FakeGospelInput(),
+            multilingual_pipeline=FakeMultilingualPipeline(),
+            asset_pipeline=FakeAssetPipeline(),
+        )
+
+        result = orchestrator.run(
+            gospel="Lukas 5:33-39",
+            languages=(
+                "IND",
+                "ENG",
+                "ESP",
+            ),
+            audience="adult",
+            output_dir=output_dir,
+            workflow_name="Daily Gospel",
+        )
+
+        assert "progress" in result
+
+        progress = result["progress"]
+
+        assert progress["total"] == 3
+        assert progress["queued"] == 0
+        assert progress["running"] == 0
+        assert progress["completed"] == 3
+        assert progress["failed"] == 0
+        assert progress["remaining"] == 0
+        assert progress["percentage"] == 100.0
+        assert progress["finished"] is True
+        assert progress["state"] == "completed"
+
 def main():
 
     test_successful_batch()
@@ -395,6 +434,8 @@ def main():
     test_prepare_creates_queued_jobs()
 
     test_partial_failure_continues_batch()
+
+    test_progress_is_returned()
 
     print("=" * 60)
     print(

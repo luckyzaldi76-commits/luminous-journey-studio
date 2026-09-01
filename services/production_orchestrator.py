@@ -2,6 +2,8 @@
 from typing import Iterable
 
 from services.asset_pipeline import AssetPipeline
+from services.gospel_input import GospelInput
+from services.job_progress import JobProgressService
 from services.job_queue import ProductionJobQueue
 from services.job_service import ProductionJob
 from services.multilingual_pipeline import (
@@ -17,6 +19,7 @@ class ProductionOrchestrator:
         multilingual_pipeline=None,
         job_queue=None,
         asset_pipeline=None,
+        job_progress=None,
     ):
 
         self.gospel_input = gospel_input
@@ -29,6 +32,13 @@ class ProductionOrchestrator:
         self.job_queue = (
             job_queue
             or ProductionJobQueue()
+        )
+
+        self.job_progress = (
+            job_progress
+            or JobProgressService(
+                self.job_queue
+            )
         )
 
         self.asset_pipeline = (
@@ -144,7 +154,9 @@ class ProductionOrchestrator:
                 ),
             }
 
-            jobs.append(job)
+            jobs.append(
+                job
+            )
 
         return jobs
 
@@ -235,13 +247,32 @@ class ProductionOrchestrator:
 
         while not self.job_queue.empty():
 
-            job = self.job_queue.run_next(
-                execute
-            )
+            try:
 
-            processed.append(
-                job
-            )
+                processed.append(
+                    self.job_queue.run_next(
+                        execute
+                    )
+                )
+
+            except Exception:
+
+                failed_job = (
+                    self.job_queue.last_failed()
+                    if hasattr(
+                        self.job_queue,
+                        "last_failed",
+                    )
+                    else None
+                )
+
+                if failed_job is not None:
+
+                    processed.append(
+                        failed_job
+                    )
+
+                continue
 
         completed = [
             job
@@ -254,6 +285,10 @@ class ProductionOrchestrator:
             for job in processed
             if job.status == "failed"
         ]
+
+        progress = (
+            self.job_progress.snapshot()
+        )
 
         return {
             "success": (
@@ -268,6 +303,7 @@ class ProductionOrchestrator:
             "total_jobs": len(jobs),
             "completed_jobs": len(completed),
             "failed_jobs": len(failed),
+            "progress": progress,
             "jobs": [
                 {
                     "job_id": job.job_id,
