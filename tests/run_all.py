@@ -1,4 +1,4 @@
-﻿import subprocess
+import subprocess
 import sys
 
 
@@ -53,6 +53,7 @@ TESTS = (
     "tests.test_multilingual_job_pipeline",
     "tests.test_production_orchestrator",
     "tests.test_cli_batch_generation",
+    "tests.test_job_progress",
     "tests.test_cli_batch_execution",
 )
 
