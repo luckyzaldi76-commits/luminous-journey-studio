@@ -58,12 +58,65 @@ class FakeProductionPipeline:
         }
 
 
+class FailingProductionPipeline:
+
+    def __init__(
+        self,
+        failing_languages=None,
+    ):
+
+        self.failing_languages = set(
+            failing_languages or ()
+        )
+
+    def generate(
+        self,
+        gospel,
+        language,
+        audience,
+        output_dir,
+        workflow_name,
+    ):
+
+        if language in self.failing_languages:
+
+            raise RuntimeError(
+                f"Generation failed: {language}"
+            )
+
+        output_dir = Path(
+            output_dir
+        )
+
+        output_dir.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        return {
+            "gospel": gospel,
+            "language": language,
+            "audience": audience,
+            "workflow": workflow_name,
+            "output_dir": str(
+                output_dir
+            ),
+            "script": (
+                f"Script {language}"
+            ),
+        }
+
+
 class FakeMultilingualPipeline:
 
-    def __init__(self):
+    def __init__(
+        self,
+        production_pipeline=None,
+    ):
 
         self.pipeline = (
-            FakeProductionPipeline()
+            production_pipeline
+            or FakeProductionPipeline()
         )
 
     def _normalize_languages(
@@ -107,9 +160,7 @@ class FakeMultilingualPipeline:
 
             if language not in result:
 
-                result.append(
-                    language
-                )
+                result.append(language)
 
         if not result:
 
@@ -145,7 +196,7 @@ class FakeAssetPipeline:
         }
 
 
-def main():
+def test_successful_batch():
 
     with tempfile.TemporaryDirectory() as temp:
 
@@ -214,6 +265,27 @@ def main():
             output_dir / "ESP"
         ).exists()
 
+
+def test_prepare_creates_queued_jobs():
+
+    with tempfile.TemporaryDirectory() as temp:
+
+        output_dir = Path(temp)
+
+        orchestrator = (
+            ProductionOrchestrator(
+                gospel_input=(
+                    FakeGospelInput()
+                ),
+                multilingual_pipeline=(
+                    FakeMultilingualPipeline()
+                ),
+                asset_pipeline=(
+                    FakeAssetPipeline()
+                ),
+            )
+        )
+
         jobs = orchestrator.prepare(
             gospel="Yohanes 20:24-29",
             languages=("IND", "ENG"),
@@ -228,6 +300,102 @@ def main():
             for job in jobs
         )
 
+
+def test_partial_failure_continues_batch():
+
+    with tempfile.TemporaryDirectory() as temp:
+
+        output_dir = Path(temp)
+
+        pipeline = (
+            FailingProductionPipeline(
+                failing_languages={"ENG"}
+            )
+        )
+
+        orchestrator = (
+            ProductionOrchestrator(
+                gospel_input=(
+                    FakeGospelInput()
+                ),
+                multilingual_pipeline=(
+                    FakeMultilingualPipeline(
+                        pipeline
+                    )
+                ),
+                asset_pipeline=(
+                    FakeAssetPipeline()
+                ),
+            )
+        )
+
+        result = orchestrator.run(
+            gospel="Lukas 5:33-39",
+            languages=(
+                "IND",
+                "ENG",
+                "ESP",
+            ),
+            audience="adult",
+            output_dir=output_dir,
+            workflow_name="Daily Gospel",
+        )
+
+        assert result["success"] is False
+
+        assert result["total_jobs"] == 3
+
+        assert result["completed_jobs"] == 2
+
+        assert result["failed_jobs"] == 1
+
+        assert len(
+            result["jobs"]
+        ) == 3
+
+        statuses = {
+            job["result"]["language"]: job["status"]
+            for job in result["jobs"]
+            if job["result"]
+        }
+
+        assert statuses["IND"] == "completed"
+        assert statuses["ESP"] == "completed"
+
+        failed_jobs = [
+            job
+            for job in result["jobs"]
+            if job["status"] == "failed"
+        ]
+
+        assert len(failed_jobs) == 1
+
+        assert (
+            failed_jobs[0]["error"]
+            == "Generation failed: ENG"
+        )
+
+        assert (
+            output_dir / "IND"
+        ).exists()
+
+        assert (
+            output_dir / "ESP"
+        ).exists()
+
+        assert not (
+            output_dir / "ENG" / "script.txt"
+        ).exists()
+
+
+def main():
+
+    test_successful_batch()
+
+    test_prepare_creates_queued_jobs()
+
+    test_partial_failure_continues_batch()
+
     print("=" * 60)
     print(
         "PRODUCTION ORCHESTRATOR TEST PASSED"
@@ -236,4 +404,5 @@ def main():
 
 
 if __name__ == "__main__":
+
     main()

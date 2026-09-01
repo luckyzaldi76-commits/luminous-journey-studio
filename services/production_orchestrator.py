@@ -2,7 +2,6 @@
 from typing import Iterable
 
 from services.asset_pipeline import AssetPipeline
-from services.gospel_input import GospelInput
 from services.job_queue import ProductionJobQueue
 from services.job_service import ProductionJob
 from services.multilingual_pipeline import (
@@ -236,10 +235,12 @@ class ProductionOrchestrator:
 
         while not self.job_queue.empty():
 
+            job = self.job_queue.run_next(
+                execute
+            )
+
             processed.append(
-                self.job_queue.run_next(
-                    execute
-                )
+                job
             )
 
         completed = [

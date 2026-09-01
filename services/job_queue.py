@@ -1,7 +1,10 @@
 ﻿from collections import deque
 from typing import Callable, Optional
 
-from services.job_service import JobService, ProductionJob
+from services.job_service import (
+    JobService,
+    ProductionJob,
+)
 
 
 class ProductionJobQueue:
@@ -57,15 +60,23 @@ class ProductionJobQueue:
 
         return job
 
-    def size(self) -> int:
+    def size(
+        self,
+    ) -> int:
 
-        return len(self._queue)
+        return len(
+            self._queue
+        )
 
-    def empty(self) -> bool:
+    def empty(
+        self,
+    ) -> bool:
 
         return not self._queue
 
-    def peek(self) -> Optional[ProductionJob]:
+    def peek(
+        self,
+    ) -> Optional[ProductionJob]:
 
         if not self._queue:
 
@@ -75,7 +86,9 @@ class ProductionJobQueue:
             self._queue[0]
         )
 
-    def dequeue(self) -> ProductionJob:
+    def dequeue(
+        self,
+    ) -> ProductionJob:
 
         if not self._queue:
 
@@ -109,23 +122,25 @@ class ProductionJobQueue:
                 job
             )
 
-            self.job_service.complete(
+            return self.job_service.complete(
                 job.job_id,
                 result,
             )
 
         except Exception as error:
 
-            self.job_service.fail(
+            failed = self.job_service.fail(
                 job.job_id,
                 str(error),
             )
 
-            raise
+            # Preserve the failed job as the
+            # return value so callers can inspect
+            # the job without accessing private
+            # JobService state.
+            failed._queue_error = error
 
-        return self.job_service.get(
-            job.job_id
-        )
+            return failed
 
     def run_all(
         self,

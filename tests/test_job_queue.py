@@ -1,4 +1,6 @@
-﻿from services.job_queue import ProductionJobQueue
+﻿from services.job_queue import (
+    ProductionJobQueue,
+)
 
 
 def main():
@@ -45,6 +47,11 @@ def main():
         "completed"
     )
 
+    assert completed.result == {
+        "job_id": third.job_id,
+        "success": True,
+    }
+
     assert queue.empty()
 
     batch_queue = ProductionJobQueue()
@@ -80,33 +87,26 @@ def main():
 
     failed_job = failure_queue.create()
 
-    try:
-
-        failure_queue.run_next(
-            lambda job: (
-                (_ for _ in ()).throw(
-                    RuntimeError(
-                        "queue failure"
-                    )
+    failed = failure_queue.run_next(
+        lambda job: (
+            (_ for _ in ()).throw(
+                RuntimeError(
+                    "queue failure"
                 )
             )
         )
+    )
 
-        raise AssertionError(
-            "Executor failure should propagate."
-        )
+    assert failed.job_id == (
+        failed_job.job_id
+    )
 
-    except RuntimeError as error:
+    assert failed.status == (
+        "failed"
+    )
 
-        assert str(error) == (
-            "queue failure"
-        )
-
-    assert (
-        failure_queue.job_service
-        .get(failed_job.job_id)
-        .status
-        == "failed"
+    assert failed.error == (
+        "queue failure"
     )
 
     assert failure_queue.empty()
