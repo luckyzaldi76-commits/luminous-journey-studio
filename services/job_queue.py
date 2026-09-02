@@ -30,7 +30,10 @@ class ProductionJobQueue:
 
         self._queue = deque()
 
-        self._job_ids = []
+        self._job_ids = [
+            job.job_id
+            for job in self.job_service._jobs.values()
+        ]
 
     def enqueue(
         self,

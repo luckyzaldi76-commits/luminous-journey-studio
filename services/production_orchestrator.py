@@ -5,6 +5,7 @@ from services.asset_pipeline import AssetPipeline
 from services.gospel_input import GospelInput
 from services.job_progress import JobProgressService
 from services.job_queue import ProductionJobQueue
+from services.job_recovery import JobRecoveryService
 from services.job_service import ProductionJob
 from services.multilingual_pipeline import (
     MultilingualGenerationPipeline,
@@ -154,11 +155,115 @@ class ProductionOrchestrator:
                 ),
             }
 
+            if (
+                self.job_queue.job_service.store
+                is not None
+            ):
+
+                self.job_queue.job_service.store.save(
+                    job
+                )
+
             jobs.append(
                 job
             )
 
         return jobs
+
+    def _execute_job(
+        self,
+        job: ProductionJob,
+    ) -> dict:
+
+        metadata = job.result or {}
+
+        gospel = metadata.get(
+            "gospel"
+        )
+
+        language = metadata.get(
+            "language"
+        )
+
+        audience = metadata.get(
+            "audience"
+        )
+
+        workflow_name = metadata.get(
+            "workflow",
+            "Daily Gospel",
+        )
+
+        output_dir = metadata.get(
+            "output_dir"
+        )
+
+        if not gospel:
+
+            raise ValueError(
+                "Job is missing gospel metadata."
+            )
+
+        if not language:
+
+            raise ValueError(
+                "Job is missing language metadata."
+            )
+
+        if audience is None:
+
+            raise ValueError(
+                "Job is missing audience metadata."
+            )
+
+        if not output_dir:
+
+            raise ValueError(
+                "Job is missing output_dir metadata."
+            )
+
+        output_dir = Path(
+            output_dir
+        )
+
+        output_dir.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        language_dir = output_dir
+
+        result = (
+            self.multilingual_pipeline
+            .pipeline
+            .generate(
+                gospel=gospel,
+                language=language,
+                audience=audience,
+                output_dir=language_dir,
+                workflow_name=workflow_name,
+            )
+        )
+
+        exported = (
+            self.asset_pipeline.export(
+                language_dir,
+                language_dir.parent,
+            )
+        )
+
+        return {
+            "job_id": job.job_id,
+            "language": language,
+            "content": result,
+            "assets": exported,
+            "source_dir": str(
+                language_dir
+            ),
+            "output_dir": str(
+                language_dir.parent
+            ),
+        }
 
     def run(
         self,
@@ -196,62 +301,13 @@ class ProductionOrchestrator:
 
         processed = []
 
-        def execute(job):
-
-            metadata = job.result or {}
-
-            language = metadata[
-                "language"
-            ]
-
-            language_dir = (
-                output_dir / language
-            )
-
-            language_dir.mkdir(
-                parents=True,
-                exist_ok=True,
-            )
-
-            result = (
-                self.multilingual_pipeline
-                .pipeline
-                .generate(
-                    gospel=normalized_gospel,
-                    language=language,
-                    audience=audience,
-                    output_dir=language_dir,
-                    workflow_name=workflow_name,
-                )
-            )
-
-            exported = (
-                self.asset_pipeline.export(
-                    language_dir,
-                    output_dir,
-                )
-            )
-
-            return {
-                "job_id": job.job_id,
-                "language": language,
-                "content": result,
-                "assets": exported,
-                "source_dir": str(
-                    language_dir
-                ),
-                "output_dir": str(
-                    output_dir
-                ),
-            }
-
         while not self.job_queue.empty():
 
             try:
 
                 processed.append(
                     self.job_queue.run_next(
-                        execute
+                        self._execute_job
                     )
                 )
 
@@ -316,4 +372,68 @@ class ProductionOrchestrator:
             "output_dir": str(
                 output_dir
             ),
+        }
+
+    def recover(
+        self,
+    ) -> dict:
+
+        recovery = JobRecoveryService(
+            self.job_queue.job_service
+        )
+
+        recoverable = (
+            recovery.find_recoverable()
+        )
+
+        recovered = (
+            recovery.recover(
+                self._execute_job
+            )
+        )
+
+        completed = [
+            job
+            for job in recovered
+            if job.status == "completed"
+        ]
+
+        failed = [
+            job
+            for job in recovered
+            if job.status == "failed"
+        ]
+
+        progress = (
+            self.job_progress.snapshot()
+        )
+
+        return {
+            "success": (
+                len(failed) == 0
+                and len(completed)
+                == len(recoverable)
+            ),
+            "total_jobs": len(
+                recoverable
+            ),
+            "recovered_jobs": len(
+                recovered
+            ),
+            "completed_jobs": len(
+                completed
+            ),
+            "failed_jobs": len(
+                failed
+            ),
+            "progress": progress,
+            "jobs": [
+                {
+                    "job_id": job.job_id,
+                    "status": job.status,
+                    "result": job.result,
+                    "error": job.error,
+                }
+                for job in recovered
+            ],
         }
