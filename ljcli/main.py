@@ -121,15 +121,114 @@ def _print_workflows():
     return 0
 
 
+def _print_result(
+    result,
+    title,
+):
+
+    print()
+    print("=" * 60)
+    print(title)
+    print("=" * 60)
+
+    if "gospel" in result:
+
+        print(
+            f"Gospel         : {result['gospel']}"
+        )
+
+    if "languages" in result:
+
+        print(
+            f"Languages      : "
+            f"{', '.join(result['languages'])}"
+        )
+
+    if "audience" in result:
+
+        print(
+            f"Audience       : {result['audience']}"
+        )
+
+    if "workflow" in result:
+
+        print(
+            f"Workflow       : {result['workflow']}"
+        )
+
+    if "total_jobs" in result:
+
+        print(
+            f"Total Jobs     : "
+            f"{result['total_jobs']}"
+        )
+
+    if "recovered_jobs" in result:
+
+        print(
+            f"Recovered      : "
+            f"{result['recovered_jobs']}"
+        )
+
+    if "completed_jobs" in result:
+
+        print(
+            f"Completed      : "
+            f"{result['completed_jobs']}"
+        )
+
+    if "failed_jobs" in result:
+
+        print(
+            f"Failed         : "
+            f"{result['failed_jobs']}"
+        )
+
+    progress = result.get(
+        "progress"
+    )
+
+    if progress:
+
+        print(
+            f"Progress       : "
+            f"{progress['percentage']:.2f}%"
+        )
+
+        print(
+            f"State          : "
+            f"{progress['state']}"
+        )
+
+    if "output_dir" in result:
+
+        print(
+            f"Output         : "
+            f"{result['output_dir']}"
+        )
+
+    print(
+        f"Success        : "
+        f"{result['success']}"
+    )
+
+    print("=" * 60)
+
+
+def _create_orchestrator():
+
+    return ProductionOrchestrator()
+
+
 def _generate(args):
 
     output_dir = Path(
         args.output_dir
     )
 
-    pipeline = ProductionOrchestrator()
+    orchestrator = _create_orchestrator()
 
-    result = pipeline.run(
+    result = orchestrator.run(
         gospel=args.gospel,
         languages=(args.language,),
         audience=args.audience,
@@ -137,51 +236,10 @@ def _generate(args):
         workflow_name=args.workflow,
     )
 
-    print()
-    print("=" * 60)
-    print("PRODUCTION GENERATION COMPLETE")
-    print("=" * 60)
-
-    print(
-        f"Gospel         : {result['gospel']}"
+    _print_result(
+        result,
+        "PRODUCTION GENERATION COMPLETE",
     )
-
-    print(
-        f"Language       : "
-        f"{result['languages'][0]}"
-    )
-
-    print(
-        f"Audience       : {result['audience']}"
-    )
-
-    print(
-        f"Workflow       : {result['workflow']}"
-    )
-
-    print(
-        f"Jobs           : {result['total_jobs']}"
-    )
-
-    print(
-        f"Completed      : "
-        f"{result['completed_jobs']}"
-    )
-
-    print(
-        f"Failed         : "
-        f"{result['failed_jobs']}"
-    )
-
-    print(
-        f"Output         : {result['output_dir']}"
-    )
-
-    print(
-        f"Success        : {result['success']}"
-    )
-
-    print("=" * 60)
 
     return 0 if result["success"] else 1
 
@@ -204,9 +262,9 @@ def _batch(args):
         args.output_dir
     )
 
-    pipeline = ProductionOrchestrator()
+    orchestrator = _create_orchestrator()
 
-    result = pipeline.run(
+    result = orchestrator.run(
         gospel=args.gospel,
         languages=languages,
         audience=args.audience,
@@ -214,49 +272,24 @@ def _batch(args):
         workflow_name=args.workflow,
     )
 
-    print()
-    print("=" * 60)
-    print("PRODUCTION BATCH COMPLETE")
-    print("=" * 60)
-
-    print(
-        f"Gospel         : {result['gospel']}"
+    _print_result(
+        result,
+        "PRODUCTION BATCH COMPLETE",
     )
 
-    print(
-        f"Languages      : "
-        f"{', '.join(result['languages'])}"
-    )
+    return 0 if result["success"] else 1
 
-    print(
-        f"Audience       : {result['audience']}"
-    )
 
-    print(
-        f"Workflow       : {result['workflow']}"
-    )
+def _recover(args):
 
-    print(
-        f"Total Jobs     : {result['total_jobs']}"
-    )
+    orchestrator = _create_orchestrator()
 
-    print(
-        f"Completed      : {result['completed_jobs']}"
-    )
+    result = orchestrator.recover()
 
-    print(
-        f"Failed         : {result['failed_jobs']}"
+    _print_result(
+        result,
+        "PRODUCTION RECOVERY COMPLETE",
     )
-
-    print(
-        f"Output         : {result['output_dir']}"
-    )
-
-    print(
-        f"Success        : {result['success']}"
-    )
-
-    print("=" * 60)
 
     return 0 if result["success"] else 1
 
@@ -266,7 +299,7 @@ def build_parser():
     parser = argparse.ArgumentParser(
         prog="ljcli",
         description=(
-            "Luminous Journey Studio CLI"
+            "Luminous Journey Studio"
         ),
     )
 
@@ -356,6 +389,11 @@ def build_parser():
         help="Workflow name",
     )
 
+    subparsers.add_parser(
+        "recover",
+        help="Recover interrupted production jobs",
+    )
+
     return parser
 
 
@@ -384,6 +422,10 @@ def main(argv=None):
     if args.command == "batch":
 
         return _batch(args)
+
+    if args.command == "recover":
+
+        return _recover(args)
 
     return 0
 
